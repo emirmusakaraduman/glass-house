@@ -2,11 +2,11 @@
 
 Frontend for GlassHouse (Dev3pack Global Hackathon, 27–29 Nov 2026). Next.js 16 App Router,
 React 19, Tailwind CSS v4, Solana wallet adapter, Recharts. Runs on mock data until the
-Anchor IDL lands. Product source of truth: `../docs/GlassHouse_v4.pdf`.
+Anchor IDL lands. Product source of truth: the v4 design PDF (kept outside the repo).
 
 ## Visual target
 
-- `../docs/design/mockup.png` is a layout reference only: its colors (purple) are no longer the
+- The design mockup (kept outside the repo) is a layout reference only: its colors (purple) are no longer the
   target, its text is Turkish and its numbers are made up (see below).
 - Palette (tokens in `src/app/globals.css`; use tokens and classes, never hard-coded colors):
   - Background `#0B1120` (`frost`). Glass surfaces `#131C31` at about 70% with backdrop blur
