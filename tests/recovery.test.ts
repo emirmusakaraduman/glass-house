@@ -8,6 +8,7 @@ import { decodeEvent, RECOVERY_RECORDED } from "./lib/events";
 import {
   assertInvariants,
   collateralDeducted,
+  interestSettled,
   crankLoanIx,
   createPool,
   CreatePoolOptions,
@@ -70,7 +71,10 @@ function expectedWaterfall(c: Ctx, proceeds: bigint) {
   const p = readPool(c.env, c.pool.pool);
   const late = getUnixTimestamp(c.env) - l.nextDue - p.graceSeconds;
   const periods = late < 0n ? 0n : late / p.periodSeconds + 1n;
-  const accruedInterest = loanMath.interestForPeriod(l.remainingPrincipal, l.rateBps) * periods;
+  // Tüm gecikmiş dönemlerin faizi − Late2'de teminattan zaten ödenen faiz (iki kez sayılmaz).
+  const gross = loanMath.interestForPeriod(l.remainingPrincipal, l.rateBps) * periods;
+  const settled = interestSettled(l);
+  const accruedInterest = gross > settled ? gross - settled : 0n;
   return {
     accruedInterest,
     w: waterfall({

@@ -533,6 +533,11 @@ export interface LoanFixtureOptions {
   lastProcessedPeriod?: bigint;
   /** loan_ext.collateral_deducted. Varsayılan: Late2/Defaulted için 1 taksit, diğerleri 0. */
   collateralDeducted?: bigint;
+  /**
+   * loan_ext.interest_settled: bu gecikme döngüsünde teminattan ödenen faiz. Varsayılan: Late2/Defaulted
+   * için bir dönemin faizi (Late2 adımında kesilen taksidin faiz kısmı), diğerleri 0.
+   */
+  interestSettled?: bigint;
   borrower?: PublicKey;
   seller?: PublicKey;
   /** true (varsayılan) ise havuz sayaçları da güncellenir: next_loan_id, total_outstanding, */
@@ -607,10 +612,16 @@ export function writeLoanFixture(env: TestEnv, pool: PoolHandle, opts: LoanFixtu
     escrowBump: pdas.bumps.escrow,
     collateralBump: pdas.bumps.collateral,
     // loan_ext.collateral_deducted: Late2/Defaulted'da bir taksit teminattan kesilmiştir.
-    reserved: withCollateralDeducted(
-      new Uint8Array(64),
-      opts.collateralDeducted ??
-        (opts.status === LoanStatus.Late2 || opts.status === LoanStatus.Defaulted ? installment : 0n),
+    reserved: withInterestSettled(
+      withCollateralDeducted(
+        new Uint8Array(64),
+        opts.collateralDeducted ??
+          (opts.status === LoanStatus.Late2 || opts.status === LoanStatus.Defaulted ? installment : 0n),
+      ),
+      opts.interestSettled ??
+        (opts.status === LoanStatus.Late2 || opts.status === LoanStatus.Defaulted
+          ? loanMath.interestForPeriod(remaining, p.rateBps)
+          : 0n),
     ),
   };
   writeLoan(env, pdas.loan, state);
@@ -643,6 +654,20 @@ export function collateralDeducted(loan: LoanState): bigint {
 function withCollateralDeducted(reserved: Uint8Array, value: bigint): Uint8Array {
   const b = Buffer.from(reserved);
   b.writeBigUInt64LE(value, 0);
+  return new Uint8Array(b);
+}
+
+/**
+ * `Loan.reserved` bayt 8..16 = interest_settled (u64 LE) — Late2'de teminattan ödenen faiz.
+ * Temerrütte birikmiş faizden düşülür (aynı ay iki kez sayılmaz).
+ */
+export function interestSettled(loan: LoanState): bigint {
+  return Buffer.from(loan.reserved).readBigUInt64LE(8);
+}
+
+function withInterestSettled(reserved: Uint8Array, value: bigint): Uint8Array {
+  const b = Buffer.from(reserved);
+  b.writeBigUInt64LE(value, 8);
   return new Uint8Array(b);
 }
 

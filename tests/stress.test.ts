@@ -4,14 +4,16 @@
 // Kontrol rakamları (kılavuz): ev havuzu, 20 temerrüt, masraf %10:
 //   düşüş %30 → toplam zarar ≈ 229.937 USD, yatırımcıya 0
 //   düşüş %40 → yatırımcıya ≈ 24.937 USD
-// Program, bu rakamlardan kredi başına ≈ 408 USD (bir aylık faiz) yukarıda çıkar; nedeni
-// scripts/out/stress.json notlarında ve aşağıdaki testte belgelidir.
+// Faiz düzeltmesinden önce program kredi başına ≈ 408 USD (bir aylık faiz) yukarıda çıkıyordu:
+// Late2'de teminattan ödenen faiz, record_recovery'de birikmiş faize ikinci kez ekleniyordu.
+// Düzeltmeden sonra (Loan.reserved[8..16] interest_settled) toplam zarar kılavuzla ±5 USD uyumludur.
 
 import { expect } from "chai";
 import { MATRIX, runAll, runScenario, ScenarioDetail, ScenarioRow } from "./lib/stressSim";
 import { buildNotes, EXPECTED } from "./lib/stressNotes";
 
-const MONTHLY_INTEREST_PER_LOAN = 408.33; // 70.000 × %7 / 12
+/** Late2'de teminattan kesilen taksidin faizinin yedek fona giren payı (%0,5 / %7 × 408,33 × 20 kredi). */
+const RESERVE_INTEREST_SHARE = 583.33;
 const DEFAULTS = 20;
 
 describe("stres simülasyonu (100 kredi, 20 temerrüt)", function () {
@@ -49,28 +51,25 @@ describe("stres simülasyonu (100 kredi, 20 temerrüt)", function () {
     expect(buildNotes(rows, details).length).to.be.greaterThan(5);
   });
 
-  it("ev, masraf %10 / düşüş %30: yatırımcıya 0; toplam zarar kılavuzdan yalnızca 1 aylık faiz kadar yüksek", () => {
+  it("ev, masraf %10 / düşüş %30: yatırımcıya 0; toplam zarar kılavuzla (229.937) ±5 USD uyumlu", () => {
     const r = find("house", 10, 30);
     expect(r.investorLoss).to.equal(0);
     expect(r.investorLossPct).to.equal(0);
     // Zararı kasa + yedek yer.
     expect(r.firstLossAndReserveUsed).to.be.closeTo(r.totalLoss, 0.01);
-    const extra = r.totalLoss - EXPECTED.totalLoss_10_30;
-    // Sapma = 20 kredi × 1 aylık faiz (≈ 8.167 USD): program birikmiş faizi 15 ay sayar; teminattan
-    // ödenen ilk ayın faizi alacağa bir kez daha eklenir.
-    expect(extra).to.be.closeTo(DEFAULTS * MONTHLY_INTEREST_PER_LOAN, 150);
+    // Faiz düzeltmesi: Late2'de teminattan ödenen faiz birikmiş faizden düşülür (eskiden +8.167 USD sapma).
+    expect(r.totalLoss).to.be.closeTo(EXPECTED.totalLoss_10_30, 5);
     expect(r.perLoanShortfall).to.be.closeTo(r.totalLoss / DEFAULTS, 0.01);
   });
 
-  it("ev, masraf %10 / düşüş %40: yatırımcıya zarar yansır (kılavuz ≈ 24.937 + faiz sapması)", () => {
+  it("ev, masraf %10 / düşüş %40: yatırımcıya ≈ 24.937 USD yansır (yedeğe giren faiz payı kadar eksik)", () => {
     const r = find("house", 10, 40);
     const d = details[rows.indexOf(r)];
     expect(r.investorLoss).to.be.greaterThan(0);
     // Kasa (350.000) + yedek (35.000) tamamen tükenir. Yedek, Late2 kesintilerinden ≈ 583 USD faiz payı da aldı.
-    expect(r.firstLossAndReserveUsed).to.be.closeTo(d.firstLossStart + d.reserveStart + 583.33, 1);
-    // Beklenen + faiz sapması (8.167) − yedeğe giren faiz payı (583).
-    const expected = EXPECTED.investorLoss_10_40 + DEFAULTS * MONTHLY_INTEREST_PER_LOAN - 583.33;
-    expect(r.investorLoss).to.be.closeTo(expected, 150);
+    expect(r.firstLossAndReserveUsed).to.be.closeTo(d.firstLossStart + d.reserveStart + RESERVE_INTEREST_SHARE, 1);
+    // Kılavuz 24.937; yedeğe giren faiz payı kasa+yedeği büyüttüğü için yatırımcıya ≈ 583 USD daha az düşer.
+    expect(r.investorLoss).to.be.closeTo(EXPECTED.investorLoss_10_40 - RESERVE_INTEREST_SHARE, 5);
   });
 
   it("zarar masraf ve düşüşle monoton artar (ev ve 2008)", () => {

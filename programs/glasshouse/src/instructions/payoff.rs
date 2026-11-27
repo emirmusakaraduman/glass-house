@@ -18,6 +18,7 @@ use crate::constants::*;
 use crate::errors::GlassError;
 use crate::lifecycle::events::LoanPaidOff;
 use crate::lifecycle::provision::apply_provision_change;
+use crate::lifecycle::state::loan_ext;
 use crate::math;
 use crate::nav::assert_vault_covers_idle;
 use crate::state::{Loan, LoanStatus, Pool};
@@ -153,6 +154,7 @@ pub fn payoff_handler(ctx: Context<Payoff>) -> Result<()> {
         loan.paid_installments = loan.paid_installments.saturating_add(1);
         loan.last_processed_period = 0;
         loan.missed_installments = 0;
+        loan_ext::set_interest_settled(loan, 0);
         loan.status = LoanStatus::PaidOff;
     }
 
