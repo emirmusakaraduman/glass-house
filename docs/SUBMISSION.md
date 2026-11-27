@@ -23,12 +23,12 @@ DeFi
 
 `HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2`
 
-**[CONFIRM]** The address is fixed by the program keypair, but it only exists on devnet after the
-deploy step in [DEPLOY.md](DEPLOY.md). Check with `solana program show <id> --url devnet` before
-submitting.
+Deployed and executable on devnet. On 27 November 2026 the on-chain binary was compared with the
+local build and matched (SHA-256 `2172fb29…5571`). Re-check with `solana program show <id> --url devnet`
+before submitting; deploy steps are in [DEPLOY.md](DEPLOY.md).
 
-Other addresses (mock USDC mint, pools, vaults): `deployments/devnet.json` **[CONFIRM: filled by
-the deploy scripts]**.
+Other addresses (mock USDC mint, pools, vaults): [`deployments/devnet.json`](../deployments/devnet.json)
+(filled by the deploy scripts; the demo seed created 13 loans).
 
 ## Description
 
@@ -47,7 +47,7 @@ a 1% fee and three instalments of collateral sit in escrow until a title agent c
 registration, and `fund_loan` is permissionless because every condition is checked on-chain.
 Investor share value is computed from internal counters rather than token balances, so donating to
 a vault cannot move the price. Our own security review found and fixed two denial-of-service
-issues before deployment, and the program is covered by 50 Rust unit tests and 109 integration tests (46 LiteSVM, 63 on a local
+issues before deployment, and the program is covered by 51 Rust unit tests and 206 integration tests (143 LiteSVM, 63 on a local
 validator), including house and vehicle end-to-end flows, loss-waterfall recovery and a pool-isolation test.
 
 It is a prototype on devnet with mock USDC. We have no licensed lender or SPV partner yet, deposits
@@ -68,7 +68,7 @@ used if a live call fails, so the demo never depends on live scraping.
 
 ## Links
 
-- Repository: **[CONFIRM]**
+- Repository: https://github.com/emirmusakaraduman/glass-house
 - Demo video (under 3 minutes): **[CONFIRM]**
 - Live app: **[CONFIRM]**
 - License: MIT
