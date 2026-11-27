@@ -1,0 +1,9 @@
+# Netlify build for the GlassHouse web app. In the Netlify UI set Base directory = app.
+# The Next.js runtime (OpenNext adapter) is added by Netlify automatically; no plugin here.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
