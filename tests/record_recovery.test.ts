@@ -3,6 +3,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   assertInvariants,
   collateralDeducted,
+  interestSettled,
   crankLoanIx,
   createPool,
   CreatePoolOptions,
@@ -65,7 +66,10 @@ function expectedWaterfall(c: Ctx, proceeds: bigint) {
   const p = readPool(c.env, c.pool.pool);
   const late = getUnixTimestamp(c.env) - l.nextDue - p.graceSeconds;
   const periods = late < 0n ? 0n : late / p.periodSeconds + 1n;
-  const accruedInterest = loanMath.interestForPeriod(l.remainingPrincipal, l.rateBps) * periods;
+  // Tum gecikmis donemlerin faizi - Late2'de teminattan zaten odenen faiz (iki kez sayilmaz).
+  const gross = loanMath.interestForPeriod(l.remainingPrincipal, l.rateBps) * periods;
+  const settled = interestSettled(l);
+  const accruedInterest = gross > settled ? gross - settled : 0n;
   return {
     accruedInterest,
     w: waterfall({
