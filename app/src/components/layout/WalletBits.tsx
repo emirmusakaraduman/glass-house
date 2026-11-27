@@ -47,16 +47,16 @@ export function WalletCard() {
           Wallet
         </span>
         <span className="num text-[12.5px] text-muted" title={actor}>
-          {shortAddr(actor)}
+          {actor ? shortAddr(actor) : "–"}
         </span>
       </div>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <span className="num text-xl font-extrabold tracking-tight">{balance === null ? "–" : num(balance, 2)}</span>
+        <span className="num text-xl font-extrabold tracking-tight">{balance === null || !actor ? "–" : num(balance, 2)}</span>
         <span className="text-[13px] font-semibold text-muted">{unit}</span>
       </div>
       <div className="mt-1.5 flex items-center gap-1.5 text-[13px]">
         <span className={cx("h-2 w-2 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/0.8)]" : "bg-steel-soft")} aria-hidden />
-        <span className={connected ? "font-semibold text-ok" : "text-muted"}>{connected ? "Connected" : "Demo wallet"}</span>
+        <span className={connected ? "font-semibold text-ok" : "text-muted"}>{walletLabel(connected, client.mode)}</span>
       </div>
     </div>
   );
@@ -75,10 +75,10 @@ export function WalletStrip({ className }: { className?: string }) {
       <span className="inline-flex min-w-0 items-center gap-1.5 text-muted">
         <span className={cx("h-2 w-2 shrink-0 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/0.8)]" : "bg-steel-soft")} aria-hidden />
         <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span className="truncate">{connected ? "Connected" : "Demo wallet"}</span>
+        <span className="truncate">{walletLabel(connected, client.mode)}</span>
       </span>
       <span className="flex shrink-0 items-baseline gap-1.5">
-        <span className="num text-[15px] font-extrabold tracking-tight text-ink">{balance === null ? "–" : num(balance, 2)}</span>
+        <span className="num text-[15px] font-extrabold tracking-tight text-ink">{balance === null || !actor ? "–" : num(balance, 2)}</span>
         <span className="font-semibold text-muted">{unit}</span>
       </span>
     </div>
@@ -95,4 +95,10 @@ export function ResetDemoButton({ className }: { className?: string }) {
       Reset demo data
     </button>
   );
+}
+
+/** Mock mode signs with a built-in demo wallet; chain mode needs a real one connected. */
+function walletLabel(connected: boolean, mode: "mock" | "chain") {
+  if (connected) return "Connected";
+  return mode === "mock" ? "Demo wallet" : "Not connected";
 }
