@@ -30,6 +30,26 @@ export default function StressPage() {
   const [cost, setCost] = useState(DOC.cost);
   const [present, setPresent] = useState(false);
 
+  // Collapse effects: on by default, the choice is remembered on this device. Always on in ?present=1.
+  const [effectsPref, setEffectsPref] = useState(true);
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem("gh-stress-effects") === "off") setEffectsPref(false);
+    } catch {
+      /* storage blocked: keep the default */
+    }
+  }, []);
+  const toggleEffects = () =>
+    setEffectsPref((on) => {
+      try {
+        window.localStorage.setItem("gh-stress-effects", on ? "off" : "on");
+      } catch {
+        /* storage blocked: the toggle still works for this visit */
+      }
+      return !on;
+    });
+  const effects = present || effectsPref;
+
   const s: StressScenario = useMemo(() => ({ ...base, priceDrop: drop, defaults, saleCost: cost }), [base, drop, defaults, cost]);
   const gh = useMemo(() => runStress(s), [s]);
   const old = useMemo(() => lender2008(s), [s]);
@@ -50,6 +70,31 @@ export default function StressPage() {
   const stripRef = useRef<HTMLDivElement | null>(null);
   const panelsRef = useRef<HTMLDivElement | null>(null);
   const engine = useTimeline(simRef);
+
+  // Page-level effects: a thin red vignette while either panel is collapsed, one pulse at a collapse
+  // moment, and one spoken line per collapse. Level changes are rare, so a ref plus DOM writes.
+  const vignette = useRef<HTMLDivElement | null>(null);
+  const levels = useRef<Record<"gh" | "old", number>>({ gh: 0, old: 0 });
+  const [alarm, setAlarm] = useState("");
+  // The vignette is fixed to the viewport, so it lives in <body> (a transformed parent would trap it).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const onFx = (side: "gh" | "old") => (level: number, moment: boolean) => {
+    const was = levels.current[side];
+    levels.current[side] = level;
+    const v = vignette.current;
+    if (v) {
+      v.dataset.on = levels.current.gh === 2 || levels.current.old === 2 ? "1" : "0";
+      if (moment) {
+        v.dataset.pulse = "0";
+        void v.offsetWidth;
+        v.dataset.pulse = "1";
+      } else if (v.dataset.on === "0") v.dataset.pulse = "0";
+    }
+    if (level === 2 && was !== 2) setAlarm(side === "gh" ? "GlassHouse: investors hit" : "2008-style lender: bank wiped out");
+  };
+  const onFxGh = useRef(onFx("gh")).current;
+  const onFxOld = useRef(onFx("old")).current;
 
   // The strip sticks right under the sticky top bar (lg+); its height can change, so measure it.
   useEffect(() => {
@@ -160,6 +205,8 @@ export default function StressPage() {
     onStart={revealPanels}
     present={present}
     stripRef={stripRef}
+    effects={effects}
+    onEffects={toggleEffects}
   />
   );
 
@@ -178,6 +225,8 @@ export default function StressPage() {
           engine={engine}
           verdict={ghVerdict}
           size={present ? "present" : "page"}
+          effects={effects}
+          onFx={onFxGh}
         />
         <CrashSide
           title="2008-style lender"
@@ -189,11 +238,17 @@ export default function StressPage() {
           engine={engine}
           verdict={oldVerdict}
           size={present ? "present" : "page"}
+          effects={effects}
+          onFx={onFxOld}
         />
       </div>
       <p className="text-[12.5px] text-muted">
         Model calculation with the same assumptions as the design doc. Every defaulted {asset} is sold at the scenario&apos;s price drop; the curve shows the market getting there.
       </p>
+      <p className="sr-only" aria-live="polite">
+        {alarm}
+      </p>
+      {mounted ? createPortal(<div ref={vignette} className="gh-vignette" data-on="0" data-pulse="0" aria-hidden />, document.body) : null}
       <p className="sr-only" aria-live="polite">
         {said}
       </p>

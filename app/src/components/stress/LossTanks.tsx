@@ -57,6 +57,7 @@ export function LossTanks({ capacity, ref }: { capacity: Absorbed; ref?: Ref<Tan
   const uid = useId().replace(/:/g, "");
   const svg = useRef<SVGSVGElement | null>(null);
   const liquid = useRef<Partial<Record<LayerKey, SVGRectElement | null>>>({});
+  const tint = useRef<Partial<Record<LayerKey, SVGRectElement | null>>>({});
   const wave = useRef<Partial<Record<LayerKey, SVGGElement | null>>>({});
   const amount = useRef<Partial<Record<LayerKey, HTMLSpanElement | null>>>({});
   const tankEl = useRef<Partial<Record<LayerKey, SVGGElement | null>>>({});
@@ -75,9 +76,10 @@ export function LossTanks({ capacity, ref }: { capacity: Absorbed; ref?: Ref<Tan
           level.current[k] = lv;
           const top = g.y + (1 - lv) * g.h;
           const rect = liquid.current[k];
-          if (rect) {
-            rect.setAttribute("y", top.toFixed(2));
-            rect.setAttribute("height", (lv * g.h).toFixed(2));
+          for (const r of [rect, tint.current[k]]) {
+            if (!r) continue;
+            r.setAttribute("y", top.toFixed(2));
+            r.setAttribute("height", (lv * g.h).toFixed(2));
           }
           const w = wave.current[k];
           if (w) {
@@ -179,6 +181,17 @@ export function LossTanks({ capacity, ref }: { capacity: Absorbed; ref?: Ref<Tan
                   height={none ? 0 : g.h}
                   fill={`url(#${uid}-liq)`}
                 />
+                {/* Orange (stress) or red (collapse) tone over the remaining capital, set by the panel's data-fx. */}
+                <rect
+                  ref={(el) => {
+                    tint.current[k] = el;
+                  }}
+                  x={g.x}
+                  y={g.y}
+                  width={g.w}
+                  height={none ? 0 : g.h}
+                  className="gh-tank-tint"
+                />
                 <g
                   ref={(el) => {
                     wave.current[k] = el;
@@ -195,7 +208,7 @@ export function LossTanks({ capacity, ref }: { capacity: Absorbed; ref?: Ref<Tan
         })}
       </svg>
       {/* Same column widths as the drawing: 58 / 58 / 58 / 82 with 10 between. */}
-      <div className="mt-1 grid gap-x-[3.5%] text-center text-[12px] leading-[1.2]" style={{ gridTemplateColumns: "58fr 58fr 58fr 82fr" }} aria-hidden>
+      <div className="gh-fx-solid mt-1 grid gap-x-[3.5%] rounded-md text-center text-[12px] leading-[1.2]" style={{ gridTemplateColumns: "58fr 58fr 58fr 82fr" }} aria-hidden>
         {LAYERS.map((k) => (
           <div key={k} className="min-w-0">
             <span className={k === "investors" ? "block font-bold text-ink" : "block font-semibold text-muted"}>{LABEL[k][0]}</span>

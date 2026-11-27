@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Car, Home, Pause, Play, RotateCcw, SlidersHorizontal, X } from "lucide-react";
+import { AlertTriangle, Car, Flame, Home, Pause, Play, RotateCcw, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type Ref } from "react";
 import { Button, cx } from "@/components/ui";
 import { TIMELINE_MONTHS } from "@/lib/stressTimeline";
@@ -75,6 +75,24 @@ function EstimateBadge() {
       <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
       Estimate
     </span>
+  );
+}
+
+function EffectsButton({ on, onToggle }: { on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      title={on ? "Effects on (flames, shake, pulse)" : "Effects off: still states only"}
+      className={cx(
+        "inline-flex h-9 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[12px] font-semibold transition-colors",
+        on ? "border-warn/50 bg-warn/10 text-warn" : "border-white/15 text-muted hover:text-ink",
+      )}
+    >
+      <Flame className="h-4 w-4" aria-hidden />
+      Effects
+    </button>
   );
 }
 
@@ -256,6 +274,8 @@ export function ControlStrip({
   onStart,
   present = false,
   stripRef,
+  effects,
+  onEffects,
 }: {
   engine: TimelineEngine;
   pool: Pool;
@@ -263,6 +283,8 @@ export function ControlStrip({
   sliders: SliderSpec[];
   onReset: () => void;
   resetDisabled: boolean;
+  effects: boolean;
+  onEffects: () => void;
   onStart?: () => void;
   present?: boolean;
   stripRef?: Ref<HTMLDivElement>;
@@ -288,6 +310,7 @@ export function ControlStrip({
             <MiniSlider key={s.key} s={s} />
           ))}
         </div>
+        <EffectsButton on={effects} onToggle={onEffects} />
         <ResetButton onReset={onReset} disabled={resetDisabled} />
         <RunButton engine={engine} onStart={onStart} />
       </div>
@@ -326,6 +349,7 @@ export function ControlStrip({
                 <PoolToggle value={pool} onChange={onPool} />
                 {pool === "vehicle" ? <EstimateBadge /> : null}
                 <span className="ml-auto" />
+                <EffectsButton on={effects} onToggle={onEffects} />
                 <ResetButton onReset={onReset} disabled={resetDisabled} />
               </div>
               <div className="grid gap-2 sm:grid-cols-3">

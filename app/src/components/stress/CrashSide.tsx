@@ -1,11 +1,12 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import { AlertTriangle, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { IconBadge, Pane, cx } from "@/components/ui";
 import { usd } from "@/lib/format";
 import { SALE_FLOW_MONTHS, TIMELINE_MONTHS, frameAt, type Absorbed, type Timeline } from "@/lib/stressTimeline";
 import { CityGrid, type CityGridHandle } from "./CityGrid";
+import { CollapseFx, type CollapseFxHandle, type FxLevel } from "./CollapseFx";
 import { LAYERS, LAYER_NAME, LossTanks, type LayerKey, type TanksHandle } from "./LossTanks";
 import { PriceGauge, type PriceHandle } from "./PriceGauge";
 import { approach, type TimelineEngine } from "./useTimeline";
@@ -36,6 +37,8 @@ export function CrashSide({
   engine,
   verdict,
   size = "page",
+  effects = true,
+  onFx,
   children,
 }: {
   title: string;
@@ -48,6 +51,10 @@ export function CrashSide({
   verdict: { text: string; bad: boolean };
   /** "present": the 1920×1080 video view, drawn larger. */
   size?: "page" | "present";
+  /** Motion effects (flames, shake, crack draw-in). Off: the same states, drawn still. */
+  effects?: boolean;
+  /** Level changes, for the page's vignette and the spoken alert. `moment` = it just collapsed while playing. */
+  onFx?: (level: FxLevel, moment: boolean) => void;
   children?: ReactNode;
 }) {
   const grid = useRef<CityGridHandle>(null);
@@ -64,6 +71,12 @@ export function CrashSide({
   const disp = useRef<{ a: Absorbed; loss: number; idx: number; bank: number | null } | null>(null);
   const prevT = useRef(0);
   const text = useRef<Record<string, string>>({});
+  const fx = useRef<CollapseFxHandle>(null);
+  const fxLevel = useRef<FxLevel | -1>(-1);
+  const effectsRef = useRef(effects);
+  effectsRef.current = effects;
+  const onFxRef = useRef(onFx);
+  onFxRef.current = onFx;
 
   const { subscribe, wake } = engine;
   const tl = timeline;
@@ -150,6 +163,45 @@ export function CrashSide({
         }
       }
       prevT.current = t;
+
+      // Collapse triggers, from the exact frame (not the eased numbers on screen).
+      //   GlassHouse: stress once 75% of the first-loss vault is used; collapse at the first investor dollar.
+      //   2008-style lender: stress once half the 30x bank's equity is gone; collapse when it is wiped out.
+      let lv: FxLevel = 0;
+      if (tl.bankEquity === null) {
+        if (f.absorbed.investors > 0) lv = 2;
+        else if (tl.capacity.firstLoss > 0 && f.absorbed.firstLoss >= 0.75 * tl.capacity.firstLoss) lv = 1;
+      } else if (tl.bankEquity > 0) {
+        const left = f.bankEquityLeft ?? tl.bankEquity;
+        if (left <= 0) lv = 2;
+        else if (tl.bankEquity - left >= 0.5 * tl.bankEquity) lv = 1;
+      }
+      if (lv !== fxLevel.current) {
+        const prev = fxLevel.current;
+        fxLevel.current = lv;
+        const motion = effectsRef.current && !instant;
+        const moment = lv === 2 && prev !== -1 && prev < 2 && advancing && motion;
+        const section = wrap.current?.parentElement;
+        if (section) {
+          section.dataset.fx = String(lv);
+          if (moment) {
+            section.classList.remove("gh-fx-shake");
+            void section.offsetWidth;
+            section.classList.add("gh-fx-shake");
+          }
+        }
+        let origin: { x: number; y: number } | null = null;
+        if (lv === 2) {
+          if (tl.bankEquity === null) origin = tanks.current?.surfaceOf("investors") ?? null;
+          else {
+            const r = bankBox.current?.getBoundingClientRect();
+            origin = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+          }
+        }
+        fx.current?.setLevel(lv, { moment, origin });
+        onFxRef.current?.(lv, moment);
+      }
+
       parts.current.forEach((p, i) => {
         const el = dots.current[i];
         if (!el) return;
@@ -179,7 +231,7 @@ export function CrashSide({
   useEffect(() => wake(), [tl, kind, wake]);
 
   const stat = (label: string, key: "month" | "defaults" | "drop" | "loss", initial: string) => (
-    <div className="min-w-0 rounded-lg border border-white/[0.07] bg-white/[0.025] px-2.5 py-1">
+    <div className="gh-fx-solid min-w-0 rounded-lg border border-white/[0.07] bg-white/[0.025] px-2.5 py-1">
       <dt className="text-[12px] leading-tight text-muted">{label}</dt>
       <dd
         ref={(el) => {
@@ -194,8 +246,13 @@ export function CrashSide({
   const big = size === "present";
 
   return (
-    <Pane className={cx("relative overflow-hidden p-4 sm:p-4", tone === "bad" ? "border-bad/30" : verdict.bad ? "border-bad/35" : "border-ok/30")}>
-      <div ref={wrap} className="space-y-2.5">
+    <Pane
+      className={cx("gh-fx-panel relative overflow-hidden p-4 sm:p-4", tone === "bad" ? "border-bad/30" : verdict.bad ? "border-bad/35" : "border-ok/30")}
+      data-fx="0"
+      data-anim={effects && !engine.reducedMotion ? "1" : "0"}
+    >
+      <CollapseFx ref={fx} animate={effects && !engine.reducedMotion} seed={tl.bankEquity === null ? 7 : 2008} />
+      <div ref={wrap} className="relative z-10 space-y-2.5">
         {/* Name on the left, the verdict on the right: the answer is in the first line. */}
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 sm:flex-nowrap">
           <div className="min-w-0 sm:flex-1">
@@ -222,6 +279,14 @@ export function CrashSide({
             >
               Investors: $0 lost so far
             </p>
+            {/* Level badges: shown by the panel's data-fx (CSS); they fade in and out in 600 ms. */}
+            <span className="relative mt-1 block h-[22px]" aria-hidden>
+              <span className="gh-fx-badge gh-fx-badge-warn">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Under stress
+              </span>
+              <span className="gh-fx-badge gh-fx-badge-hit">{tl.bankEquity === null ? "Investors hit" : "Bank wiped out"}</span>
+            </span>
           </div>
         </div>
 

@@ -1294,3 +1294,104 @@ svg.ghh-layer {
   .gh-strip { top: var(--gh-topbar-h, 0px); }
 }
 .gh-mark.gh-mark-sm { height: 14px; width: 3px; }
+
+/* ---------------------------------------------------------------- /stress collapse effects */
+/* Light safety: nothing here flashes more than 3 times a second. The glow breathes every 2 s,
+   the shake and the screen pulse play once. Reduced motion or Effects off: data-anim="0", still states. */
+.gh-fx-glow, .gh-fx-smoke, .gh-fx-canvas, .gh-fx-cracks { opacity: 0; transition: opacity 600ms ease; }
+.gh-fx-glow { box-shadow: inset 0 0 0 1.5px rgb(251 146 60 / 0.7), inset 0 0 28px rgb(251 146 60 / 0.28); }
+[data-fx="1"] .gh-fx-glow { opacity: 1; }
+[data-fx="1"][data-anim="1"] .gh-fx-glow { animation: gh-breathe 2s ease-in-out infinite; }
+[data-fx="2"] .gh-fx-glow { opacity: 1; box-shadow: inset 0 0 0 1.5px rgb(244 63 94 / 0.85), inset 0 0 36px rgb(244 63 94 / 0.32); }
+[data-fx="2"][data-anim="1"] .gh-fx-glow { animation: gh-breathe-red 2s ease-in-out infinite; }
+@keyframes gh-breathe {
+  0%, 100% { box-shadow: inset 0 0 0 1.5px rgb(251 146 60 / 0.45), inset 0 0 14px rgb(251 146 60 / 0.14); }
+  50% { box-shadow: inset 0 0 0 1.5px rgb(251 146 60 / 0.85), inset 0 0 32px rgb(251 146 60 / 0.32); }
+}
+@keyframes gh-breathe-red {
+  0%, 100% { box-shadow: inset 0 0 0 1.5px rgb(244 63 94 / 0.7), inset 0 0 24px rgb(244 63 94 / 0.24); }
+  50% { box-shadow: inset 0 0 0 1.5px rgb(244 63 94 / 0.95), inset 0 0 44px rgb(244 63 94 / 0.4); }
+}
+.gh-fx-panel { transition: border-color 600ms ease; }
+.gh-fx-panel[data-fx="1"] { border-color: rgb(251 146 60 / 0.55); }
+.gh-fx-panel[data-fx="2"] { border-color: rgb(244 63 94 / 0.75); }
+[data-fx="2"][data-anim="1"] .gh-fx-canvas { opacity: 1; }
+[data-fx="2"][data-anim="1"] .gh-fx-smoke { opacity: 1; }
+.gh-fx-smoke {
+  background:
+    radial-gradient(60% 70% at 30% 0%, rgb(15 10 12 / 0.55), transparent 70%),
+    radial-gradient(50% 60% at 75% 10%, rgb(20 12 14 / 0.45), transparent 70%);
+  background-size: 140% 100%;
+  animation: gh-smoke 14s ease-in-out infinite alternate;
+}
+@keyframes gh-smoke {
+  from { background-position: 0% 0%; }
+  to { background-position: 100% 0%; }
+}
+/* Cracks in the glass: drawn in ~500 ms at the moment, otherwise shown still. */
+.gh-fx-cracks path { fill: none; stroke: rgb(254 226 226 / 0.45); stroke-width: 1; stroke-linecap: round; filter: drop-shadow(0 0 2px rgb(244 63 94 / 0.6)); }
+[data-cracked="1"] .gh-fx-cracks { opacity: 1; }
+[data-crack="draw"][data-cracked="1"] .gh-fx-cracks path { stroke-dashoffset: var(--len); animation: gh-crack-draw 500ms ease-out forwards; }
+@keyframes gh-crack-draw { to { stroke-dashoffset: 0; } }
+/* One shake of the panel at the collapse moment: 400 ms, 6 px at most. */
+.gh-fx-shake[data-anim="1"] { animation: gh-panel-shake 400ms ease-out 1; }
+@keyframes gh-panel-shake {
+  15% { transform: translateX(-6px); }
+  35% { transform: translateX(5px); }
+  55% { transform: translateX(-3px); }
+  75% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+/* Tone over the remaining capital */
+.gh-tank-tint { fill: var(--color-warn); opacity: 0; transition: opacity 600ms ease, fill 600ms ease; pointer-events: none; }
+[data-fx="1"] .gh-tank-tint { opacity: 0.26; }
+[data-fx="2"] .gh-tank-tint { fill: var(--color-bad); opacity: 0.22; }
+/* Badges next to the verdict */
+.gh-fx-badge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+@media (max-width: 639px) { .gh-fx-badge { right: auto; left: 0; } }
+.gh-fx-badge-warn { color: var(--color-warn); border: 1px solid rgb(251 146 60 / 0.5); background: rgb(11 17 32 / 0.9); }
+.gh-fx-badge-hit { color: #fecdd3; border: 1px solid rgb(244 63 94 / 0.8); background: rgb(80 14 30 / 0.95); box-shadow: 0 0 14px rgb(244 63 94 / 0.55); }
+[data-fx="1"] .gh-fx-badge-warn { opacity: 1; }
+[data-fx="2"] .gh-fx-badge-hit { opacity: 1; }
+/* Text stays readable over the flames: solid plates under the numbers once a panel burns. */
+.gh-fx-solid { transition: background-color 600ms ease; }
+[data-fx="2"] .gh-fx-solid { background-color: rgb(11 17 32 / 0.9); }
+/* Defaulted homes glow like embers (slow, 0.3 Hz); sold ones stay dim. */
+[data-fx="2"] .gh-loan[data-s="defaulted"] .gh-loan-body { fill: rgb(249 115 22 / 0.55); stroke: #fb7185; }
+[data-fx="2"][data-anim="1"] .gh-loan[data-s="defaulted"] { animation: gh-ember 1.6s ease-in-out infinite alternate; }
+@keyframes gh-ember {
+  from { opacity: 1; filter: drop-shadow(0 0 2px rgb(249 115 22 / 0.8)); }
+  to { opacity: 0.7; filter: drop-shadow(0 0 0 rgb(249 115 22 / 0)); }
+}
+/* Page edges: a thin red vignette while a panel is collapsed; one pulse (0 → 0.35 → 0.12 in 1.2 s) at the moment. */
+.gh-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(244 63 94 / 0.9) 100%);
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+.gh-vignette[data-on="1"] { opacity: 0.12; }
+.gh-vignette[data-pulse="1"] { animation: gh-pulse 1.2s ease-out 1 forwards; }
+@keyframes gh-pulse {
+  0% { opacity: 0; }
+  18% { opacity: 0.35; }
+  100% { opacity: 0.12; }
+}
