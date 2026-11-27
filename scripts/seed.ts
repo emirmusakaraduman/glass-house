@@ -225,6 +225,25 @@ async function retry<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
   throw last;
 }
 
+/**
+ * Yazma sonrası bayat okuma koruması. Özel RPC'ler (örn. Helius devnet) geride kalmış bir düğümden eski durum
+ * döndürebilir: işlem onaylanmıştır ama hemen ardından `fetch` eski hesabı (ya da "hesap yok") görür. `read`
+ * beklenen duruma (`done`) gelene kadar ~1 sn aralıkla en fazla ~20 kez denenir; hesap henüz yoksa "henüz yok"
+ * sayılır. Süre dolarsa net bir hatayla durur (zincir tutarlıdır, seed kaldığı yerden devam eder).
+ */
+async function pollUntil<T>(read: () => Promise<T>, done: (v: T) => boolean, why: string, tries = 20): Promise<T> {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const v = await read();
+      if (done(v)) return v;
+    } catch (e: any) {
+      if (!/does not exist|could not find|Account not found|fetch failed|timeout|429|ECONN/i.test(String(e?.message ?? e))) throw e;
+    }
+    await sleep(1000);
+  }
+  throw new Error(`RPC ${tries} sn içinde güncel durumu döndürmedi (${why}). Seed'i yeniden çalıştır; kaldığı yerden devam eder.`);
+}
+
 const isLocalRpc = (rpc: string): boolean => /localhost|127\.0\.0\.1|\[::1\]/.test(rpc);
 
 /**
@@ -500,9 +519,20 @@ async function main() {
     const priceMicro = BigInt(plan.price) * USDC;
 
     // Hesap yoksa başvur; varsa kaldığı yerden devam et.
-    if (!(await conn.getAccountInfo(loan))) {
-      const nextId = num((await program.account.pool.fetch(P.pool)).nextLoanId);
-      if (nextId !== id) throw new Error(`${plan.pool} havuzunda beklenen kredi id ${id}, zincirde ${nextId}. --reset ile temiz başla.`);
+    const readStatus = async () => statusName((await program.account.loan.fetch(loan)).status);
+    let exists = !!(await conn.getAccountInfo(loan));
+    if (!exists) {
+      // Sayaç id'nin gerisindeyse önceki yazma henüz görünmüyor olabilir: sayaç yetişene kadar bekle.
+      const nextId = num(
+        (await pollUntil<any>(() => program.account.pool.fetch(P.pool), (p) => num(p.nextLoanId) >= id, `${plan.pool} #${id} sayaç`)).nextLoanId,
+      );
+      if (nextId > id) {
+        // Sayaç ilerlemiş: kredi zincirde var, yalnızca getAccountInfo bayat. Hesabın görünmesini bekle.
+        await pollUntil(readStatus, () => true, `${plan.pool} #${id} hesabı`);
+        exists = true;
+      } else if (nextId !== id) throw new Error(`${plan.pool} havuzunda beklenen kredi id ${id}, zincirde ${nextId}. --reset ile temiz başla.`);
+    }
+    if (!exists) {
       const principal = (priceMicro * BigInt(cfg.maxLtvBps)) / 10_000n;
       const down = priceMicro - principal;
       await retry(() =>
@@ -525,9 +555,11 @@ async function main() {
           .rpc(),
       );
     }
-    // Active'e kadar ilerlet.
+    // Active'e kadar ilerlet. Her yazmadan sonra durum DEĞİŞENE kadar beklenir (bayat okuma → ikinci kez gönderme yok).
+    let staleHits = 0;
     for (;;) {
-      const st = statusName((await program.account.loan.fetch(loan)).status);
+      const st = await pollUntil(readStatus, () => true, `${plan.pool} #${id} durumu`);
+      try {
       if (st === "pending") {
         await retry(() =>
           program.methods
@@ -587,6 +619,17 @@ async function main() {
         );
       } else {
         break; // active ve sonrası
+      }
+      await pollUntil(readStatus, (s) => s !== st, `${plan.pool} #${id}: ${st} sonrası güncel durum`);
+      } catch (e: any) {
+        // İşlem zincirde zaten uygulanmış ama biz bayat okumuşuz (örn. approve ikinci kez → InvalidStatus):
+        // durumu yeniden okuyup devam et. Sınırlı sayıda; gerçek bir durum hatası sonsuz döngüye girmesin.
+        if (/InvalidStatus/.test(String(e?.message ?? e)) && ++staleHits <= 10) {
+          process.stdout.write(`\n  ${plan.pool} #${id}: InvalidStatus (${st}), durum yeniden okunuyor (${staleHits}/10)\n`);
+          await sleep(2000);
+          continue;
+        }
+        throw e;
       }
     }
     log(`  ${plan.pool} #${id} (${plan.price} USD) hazır`);

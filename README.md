@@ -11,8 +11,14 @@ the first loss. Two isolated pools (house, vehicle) run from a single Anchor pro
 - Program ID: `HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2`
 - **Status:** prototype. Not audited. Do not use with real funds.
 
-> **[TODO before submission]** repo URL, demo video link, frontend URL, devnet deployment status
-> (`deployments/devnet.json` is filled by the deploy scripts; see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- Repository: https://github.com/emirmusakaraduman/glass-house
+- Devnet deployment: the program is deployed and executable on devnet, and the on-chain binary is
+  byte-identical to the local build (SHA-256 `2172fb29…5571`, checked 27 November 2026). The mock
+  USDC mint, both pools (house, vehicle) and their vault, first-loss, reserve, share-mint and
+  treasury accounts exist on-chain; addresses are in [`deployments/devnet.json`](deployments/devnet.json).
+  Deploy steps: [docs/DEPLOY.md](docs/DEPLOY.md).
+- Demo video: **[TODO: link]**
+- Live frontend: **[TODO: URL]**
 
 ## The idea in four sentences
 
