@@ -52,8 +52,10 @@ export function useGlassHouse(): Ctx {
  * Loads data through the client and refetches when it changes. `pollMs` keeps time-based
  * views (due dates, crankable loans, autopay in mock mode) fresh.
  */
-export function useChainQuery<T>(fn: (c: GlassHouseClient) => Promise<T>, deps: unknown[], pollMs = 3000) {
+export function useChainQuery<T>(fn: (c: GlassHouseClient) => Promise<T>, deps: unknown[], pollMsArg = 3000) {
   const { client, version } = useGlassHouse();
+  // Chain reads hit a public RPC: poll at most every 10 s there (the client caches the same).
+  const pollMs = client.mode === "chain" && pollMsArg ? Math.max(pollMsArg, 10_000) : pollMsArg;
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
