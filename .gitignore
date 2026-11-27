@@ -1,0 +1,20 @@
+# Sırlar — asla commit'lenmez
+.keys/
+*.keypair.json
+id.json
+.env
+.env.*
+!.env.example
+
+# Derleme çıktıları
+target/
+.anchor/
+test-ledger/
+node_modules/
+dist/
+.next/
+
+# Simülasyon çıktıları
+scripts/out/
+
+.DS_Store

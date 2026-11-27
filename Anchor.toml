@@ -1,0 +1,28 @@
+# İSKELET — Kişi 1 kendi Anchor.toml'unu getirince bu dosya onunkiyle değiştirilir.
+[toolchain]
+anchor_version = "0.32.1"
+solana_version = "4.4.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+# Program ID: Kişi 1 (lib.rs declare_id).
+glasshouse = "HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2"
+
+[programs.devnet]
+glasshouse = "HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+# Keypair .keys/ altında durur ve .gitignore'dadır; repoya girmez.
+wallet = ".keys/deployer.json"
+
+[scripts]
+# Testler LiteSVM ile süreç içinde çalışır; doğrulayıcı gerekmez:
+#   anchor run test   (ya da: npm test)
+test = "npm test"
