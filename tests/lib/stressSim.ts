@@ -18,6 +18,7 @@ import {
   patchPool,
   PoolHandle,
   PoolParams,
+  VEHICLE_PARAMS,
   readLoan,
   readPool,
   recordRecoveryIx,
@@ -31,14 +32,16 @@ import {
 } from "../helpers";
 import { decodeEvent, RECOVERY_RECORDED } from "./events";
 
-export type PoolKind = "house" | "2008";
+export type PoolKind = "house" | "2008" | "vehicle";
 
 export interface ScenarioInput {
   pool: PoolKind;
   /** Satış masrafı, % (satış fiyatı üzerinden). */
   costPct: number;
-  /** Ev fiyatı düşüşü, % (değerlemeye göre). */
+  /** Varlık (ev/araç) fiyatı düşüşü, % (değerlemeye göre). */
   dropPct: number;
+  /** Düşüş, baz puan (kırılma noktası aramasında ince ayar için); verilirse `dropPct` yerine kullanılır. */
+  dropBps?: number;
   /** Temerrüde düşen kredi sayısı. Varsayılan 20. */
   defaults?: number;
   /** Toplam kredi sayısı. Varsayılan 100. */
@@ -94,6 +97,11 @@ function setupFor(kind: PoolKind): PoolSetup {
   if (kind === "house") {
     // Ev: LTV %70, faiz %7 sabit, 240 ay; ilk zarar kasası 350.000, yedek 35.000, tampon %10.
     return { params: HOUSE_PARAMS, firstLoss: 350_000n * USDC, reserve: 35_000n * USDC, idle: 800_000n * USDC };
+  }
+  if (kind === "vehicle") {
+    // Araç (PDF tahmini): LTV %60, faiz %9, 60 ay, katsayı 0,54; 100 kredi × 12.000 = 1.200.000 USD,
+    // ilk zarar kasası 60.000 (%5), yedek 6.000 (ücretin yarısı), tampon %10.
+    return { params: VEHICLE_PARAMS, firstLoss: 60_000n * USDC, reserve: 6_000n * USDC, idle: 140_000n * USDC };
   }
   // 2008 modu: LTV %97, ilk zarar kasası 0, yedek 0; aynı program, create_pool parametreleriyle.
   return { params: MODE_2008_PARAMS, firstLoss: 0n, reserve: 0n, idle: 1_100_000n * USDC };
@@ -161,7 +169,8 @@ export async function runScenario(input: ScenarioInput): Promise<{ row: Scenario
     const l = readLoan(env, loan);
     const value = l.price < l.appraisedValue ? l.price : l.appraisedValue;
     // Satış geliri: değer × (1 − düşüş) × (1 − masraf).
-    const proceeds = (value * BigInt(100 - input.dropPct) * BigInt(100 - input.costPct)) / 10_000n;
+    const dropBps = input.dropBps ?? input.dropPct * 100;
+    const proceeds = (value * BigInt(10_000 - dropBps) * BigInt(100 - input.costPct)) / 1_000_000n;
     const floor = (value * BigInt(readPool(env, pool.pool).minRecoveryBps)) / 10_000n;
     const needCo = proceeds < floor; // alt sınırın altında ikinci imza (admin) gerekir
     if (needCo) coSigned++;
@@ -210,15 +219,57 @@ export const MATRIX: Pick<ScenarioInput, "costPct" | "dropPct">[] = [10, 15, 20]
   [30, 40].map((dropPct) => ({ costPct, dropPct })),
 );
 
-export async function runAll(): Promise<{ rows: ScenarioRow[]; details: ScenarioDetail[] }> {
+/** Araç havuzu (tahmin): masraf (%10, %15, %20) × düşüş (%30, %40, %50). */
+export const VEHICLE_MATRIX: Pick<ScenarioInput, "costPct" | "dropPct">[] = [10, 15, 20].flatMap((costPct) =>
+  [30, 40, 50].map((dropPct) => ({ costPct, dropPct })),
+);
+
+export interface BreakEven {
+  pool: PoolKind;
+  costPct: number;
+  defaults: number;
+  /** Yatırımcının zarar görmeye başladığı düşüş, % (0,1 puan hassasiyet). */
+  dropPct: number;
+}
+
+/** İkiye bölme: yatırımcıya zarar yansımaya başlayan en küçük düşüş (zincirde ölçülür). */
+export async function findBreakEven(pool: PoolKind, costPct: number, defaults: number): Promise<BreakEven> {
+  let lo = 1_000; // %10: yatırımcı zararı 0 varsayılır
+  let hi = 8_000; // %80: zarar var varsayılır
+  for (let i = 0; i < 10; i++) {
+    const mid = Math.round((lo + hi) / 2);
+    const { row } = await runScenario({ pool, costPct, dropPct: 0, dropBps: mid, defaults });
+    if (row.investorLoss > 0) hi = mid;
+    else lo = mid;
+  }
+  return { pool, costPct, defaults, dropPct: Math.round(((lo + hi) / 2) / 10) / 10 };
+}
+
+export async function runAll(): Promise<{
+  rows: ScenarioRow[];
+  details: ScenarioDetail[];
+  breakEven: BreakEven[];
+}> {
   const rows: ScenarioRow[] = [];
   const details: ScenarioDetail[] = [];
-  for (const pool of ["house", "2008"] as PoolKind[]) {
-    for (const m of MATRIX) {
-      const { row, detail } = await runScenario({ pool, ...m });
-      rows.push(row);
-      details.push(detail);
-    }
+  const add = async (input: ScenarioInput) => {
+    const { row, detail } = await runScenario(input);
+    rows.push(row);
+    details.push(detail);
+  };
+  // Ev ve 2008 modu, 20 temerrüt.
+  for (const pool of ["house", "2008"] as PoolKind[]) for (const m of MATRIX) await add({ pool, ...m });
+  // Araç havuzu (tahmin), 20 temerrüt.
+  for (const m of VEHICLE_MATRIX) await add({ pool: "vehicle", ...m });
+  // 30 temerrüt: ev %40 düşüş, araç %50 düşüş (PDF'teki ek sütun).
+  for (const costPct of [10, 15, 20]) {
+    await add({ pool: "house", costPct, dropPct: 40, defaults: 30 });
+    await add({ pool: "vehicle", costPct, dropPct: 50, defaults: 30 });
   }
-  return { rows, details };
+  // Kırılma noktaları (20 temerrüt).
+  const breakEven: BreakEven[] = [];
+  for (const pool of ["house", "vehicle"] as PoolKind[]) {
+    for (const costPct of [10, 15, 20]) breakEven.push(await findBreakEven(pool, costPct, 20));
+  }
+  return { rows, details, breakEven };
 }

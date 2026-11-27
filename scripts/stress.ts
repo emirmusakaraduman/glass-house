@@ -14,11 +14,11 @@ import { buildNotes } from "../tests/lib/stressNotes";
 
 async function main() {
   const t0 = Date.now();
-  const { rows, details } = await runAll();
+  const { rows, details, breakEven } = await runAll();
   const out = {
     generatedAt: new Date().toISOString(),
     scenarios: rows,
-    notes: buildNotes(rows, details),
+    notes: buildNotes(rows, details, breakEven),
   };
   const dir = path.resolve(__dirname, "out");
   fs.mkdirSync(dir, { recursive: true });
@@ -30,6 +30,7 @@ async function main() {
       pool: r.pool,
       masraf: `%${r.costPct}`,
       düşüş: `%${r.dropPct}`,
+      temerrüt: r.defaults,
       toplamZarar: r.totalLoss,
       kasaVeYedek: r.firstLossAndReserveUsed,
       yatırımcıZararı: r.investorLoss,
