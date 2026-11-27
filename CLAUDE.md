@@ -8,7 +8,7 @@ Bu dosya, GlassHouse reposunda çalışan Claude için kalıcı talimatlardır. 
 - Devnet deploy, airdrop, mint gibi zincire yazan komutları önce göster, kullanıcı onaylayınca çalıştır.
 - Kapsam: Backend A (para akışı). Kişi 2'nin (Backend B) ve Kişi 3'ün (Frontend) dosyalarına dokunma; ortak arayüz değişecekse önce söyle ve `docs/STATE.md`'yi güncelle.
 - "12 yarım instruction yerine 12 sağlam instruction": her instruction testle birlikte biter.
-- Zincire kişisel veri yazılmaz: isim, adres, ilan URL'si, şasi/plaka no, tapu no yok. Yalnızca tuzlu hash, değer bandı, şehir düzeyi bölge kodu.
+- Zincire kişisel veri yazılmaz: isim, adres, ilan URL'si, şasi/plaka no, tapu no yok. Varlık için yalnızca tuzlu hash, değer bandı, şehir düzeyi bölge kodu. Kredi fiyatı, anapara, taksit ve ekspertiz değeri sayısal olarak zincirde açıktır (LTV kontrolü buna dayanır); borçlu ve satıcı cüzdan adresleri açıktır, takma addır (bkz. `docs/LEGAL.md`, karar 10).
 
 ## Proje özeti
 
@@ -82,7 +82,7 @@ share_price = senior_nav / total_shares
 - Rol kontrolü `has_one` (underwriter, title_agent, recovery_agent, admin); signer kontrolleri.
 - `apply_loan`: borrower ve seller birlikte imzalar, `seller != borrower`.
 - Token account'larda mint, owner, authority constraint'leri; PDA seed + bump doğrulaması; reinit yok.
-- Her instruction sonunda `assert_invariants`: `vault.amount ≥ pool.idle_cash`, escrow bakiyesi == loan sayaçları.
+- Her instruction sonunda `assert_invariants`: `vault.amount ≥ pool.idle_cash`, escrow bakiyesi ≥ loan sayaçları, pay arzı ≤ `total_shares` (eşitlik değil, karar 7).
 - `create_pool` sonrası parametreler değişmez; sınırlar 2008 modunu (LTV %97, first_loss 0) da kabul eder.
 - Durum geçişleri yalnızca yukarıdaki diyagrama göre.
 
@@ -107,10 +107,14 @@ Bunlar takımla tartışılmadan Claude'un seçtiği varsayımlardır; README'de
 4. **Ekspertiz fiyattan düşükse kredi reddedilir, küçültülmez.** `approve_loan` LTV'yi `min(price, appraised_value)` üzerinden kontrol eder; sığmıyorsa onay verilemez (`AppraisalTooLow`). Underwriter `decision = Reject` ile reddeder, alıcı daha yüksek peşinatla yeniden başvurur. `fund_loan` aynı kontrolü tekrar yapar. `top_up_escrow` stretch olarak kalır.
 5. **`Approved` durumu eklendi, reddetme ayrı instruction değil.** `approve_loan(decision: Approve | Reject, ...)`: Approve → `Pending → Approved` ve değer/hash alanları yazılır; Reject → `Pending → Rejected`, LoanEscrow (peşinat + ücret) ve CollateralEscrow borçluya iade edilir, token hesapları kapatılıp rent borçluya döner. Instruction sayısı değişmez.
 6. **`fund_loan` permissionless.** Gerekçe: yukarıdaki kurallar zincirde; underwriter onayı zaten `Approved` durumunda kayıtlı. Bu, "kurallar kodda" anlatısıyla ve izinsiz crank'le tutarlı; demo'da da bir imzacı azalır. %5 ilk zarar kasası kuralı `fund_loan`'a eklendi.
+7. **Escrow ve pay arzı değişmezleri `>=` / `<=`, `==` değil.** Güvenlik incelemesinde bulundu: herkes bir escrow hesabına token gönderebilir, pay sahibi kendi payını yakabilir; eşitlik kontrolü bir micro-USDC ile krediyi ya da bir payın yakılmasıyla tüm deposit'leri kilitlerdi. İade ve iptal yolları gerçek bakiyeyi öder, bağış borçluya gider.
+8. **Karşılık sırası `[Active, Late1, Late2, Defaulted tabanı] = [0, 500, 1500, 1500]` bps.**
+9. **"reserve 0" = `brake_reserve_bps = 0`.** Yalnızca `crisis2008` havuzunda yedek fon freni kapalıdır (yedek fon boşken de yeni kredi durmaz); ev ve araçta `brake_reserve_bps = 25`.
+10. **Değer ve fiyat zincirde açık; Approved kredilerin süresi yok.** `appraised_value`, fiyat ve anapara sayısal olarak saklanır (LTV zincirde doğrulanabilsin diye); kimlik, adres, URL, şasi/plaka, tapu zincire yazılmaz. `Approved` krediler zaman aşımına uğramaz (programda onay zamanı alanı yok); eski bir ekspertizle sonradan fonlanabilir. Bu bilinen sınırdır, README "Known limits"te yazılı; Cmt 22:00 dondurmadan önce program değişikliği yapılmadı.
 
 ## Demo parametreleri
 
-`period_seconds = 60`, `grace_seconds = 10`. Devnet'te 9 cüzdan (2 yatırımcı, 2 alıcı, 1 satıcı, 1 underwriter, 1 tescil ajanı, 1 platform, 1 yabancı crank). Mock USDC (6 decimal). Adresler `deployments/devnet.json`'da.
+`period_seconds = 60`, `grace_seconds = 10`. Devnet'te 10 cüzdan (2 yatırımcı, 2 alıcı, 1 satıcı, 1 underwriter, 1 tescil ajanı, 1 platform, 1 recovery agent, 1 yabancı crank). Platform cüzdanı havuz admini ve platform hazinesidir. Mock USDC (6 decimal). Adresler `deployments/devnet.json`'da.
 
 ## Takvim
 

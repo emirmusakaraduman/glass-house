@@ -13,9 +13,12 @@ the first loss. Two isolated pools (house, vehicle) run from a single Anchor pro
 
 - Repository: https://github.com/emirmusakaraduman/glass-house
 - Devnet deployment: the program is deployed and executable on devnet, and the on-chain binary is
-  byte-identical to the local build (SHA-256 `2172fb29…5571`, checked 27 November 2026). The mock
-  USDC mint, both pools (house, vehicle) and their vault, first-loss, reserve, share-mint and
-  treasury accounts exist on-chain; addresses are in [`deployments/devnet.json`](deployments/devnet.json).
+  byte-identical to the local build (SHA-256 `2172fb29…5571`, checked 27 November 2026 after the
+  interest-fix upgrade). The mock USDC mint, both pools (house, vehicle) and their vault,
+  first-loss, reserve, share-mint and treasury accounts exist on-chain; addresses are in
+  [`deployments/devnet.json`](deployments/devnet.json). The pools are seeded with 13 demo loans
+  (house: 6 Active, 1 PaidOff, 2 Late1, 1 Defaulted; vehicle: 3 Active) by `scripts/seed.ts`, and
+  `scripts/verify-devnet.ts --execute` passes against them.
   Deploy steps: [docs/DEPLOY.md](docs/DEPLOY.md).
 - Demo video: **[TODO: link]**
 - Live frontend: **[TODO: URL]**
@@ -102,8 +105,9 @@ programs/glasshouse/src/
   errors.rs  events.rs  constants.rs  u256.rs
   instructions/   create_pool  fund_first_loss  deposit  apply_loan
                   approve_loan  fund_loan  confirm_title (+ cancel_funding)
-tests/            glasshouse.ts  smoke_house.ts  smoke_vehicle.ts  crisis_2008.ts
-scripts/          create-mock-usdc  create-wallets  create-pools  export-idl
+tests/            *.test.ts (LiteSVM, run with `npm test`)
+tests/localnet/   glasshouse.ts  smoke_house.ts  smoke_vehicle.ts  crisis_2008.ts  (`npm run test:localnet`)
+scripts/          create-mock-usdc  create-wallets  create-pools  export-idl  seed  verify-devnet
 docs/             STATE.md  DEPLOY.md  LEGAL.md
 ```
 
@@ -155,6 +159,13 @@ These were chosen during implementation and can be changed; if one changes, upda
    equality checks would let one micro-USDC lock a loan, or one burned share block every deposit.
    Refund and cancel paths pay out the real balance, so a donation simply goes to the borrower.
 8. **Provision order is `[Active, Late1, Late2, Defaulted floor]`** = `[0, 500, 1500, 1500]` bps.
+9. **"Reserve 0" means `brake_reserve_bps = 0`.** Only the `crisis2008` pool turns the reserve brake
+   off (new loans keep flowing even when the reserve is empty); house and vehicle use 25 bps.
+10. **Exact price and appraised value are public; approved loans do not expire.** The loan stores
+    price, principal and `appraised_value` numerically so the LTV check is verifiable on-chain;
+    identity, address, listing URL, VIN/plate and deed numbers are never written. The program has
+    no approval timestamp, so an `Approved` loan can be funded later with an old appraisal. We
+    accepted this as a known limit rather than change the program before the feature freeze.
 
 ## Security
 
@@ -173,7 +184,7 @@ test inside WSL2. The program is built as **SBPF v0** (`--arch v0`, required by 
 npm ci
 npm run build              # program (SBPF v0) + IDL
 cargo test --lib           # 50 Rust unit tests (math, nav, parameter bounds, lifecycle, waterfall)
-npm test                   # 46 LiteSVM tests (repay, payoff, crank, recovery, withdrawals, invariants)
+npm test                   # 143 LiteSVM tests (pool, deposit, loan flow, repay, payoff, crank, recovery, withdrawals, invariants, stress)
 npm run test:localnet      # 63 integration tests on a local validator (pools, loan lifecycle, stress of rules)
 ```
 
