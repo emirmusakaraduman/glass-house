@@ -47,8 +47,8 @@ a 1% fee and three instalments of collateral sit in escrow until a title agent c
 registration, and `fund_loan` is permissionless because every condition is checked on-chain.
 Investor share value is computed from internal counters rather than token balances, so donating to
 a vault cannot move the price. Our own security review found and fixed two denial-of-service
-issues before deployment, and the program is covered by 27 Rust and 63 TypeScript tests, including
-house and vehicle end-to-end flows and a pool-isolation test.
+issues before deployment, and the program is covered by 50 Rust unit tests and 109 integration tests (46 LiteSVM, 63 on a local
+validator), including house and vehicle end-to-end flows, loss-waterfall recovery and a pool-isolation test.
 
 It is a prototype on devnet with mock USDC. We have no licensed lender or SPV partner yet, deposits
 are not KYC-gated, and the code has not been independently audited; see the README's "Known

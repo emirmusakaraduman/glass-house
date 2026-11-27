@@ -1,4 +1,4 @@
-# İSKELET — Kişi 1 kendi Anchor.toml'unu getirince bu dosya onunkiyle değiştirilir.
+# Ortak yapılandırma (Kişi 1 + Kişi 2 birleştirdi).
 [toolchain]
 anchor_version = "0.32.1"
 solana_version = "4.4.1"
@@ -26,3 +26,5 @@ wallet = ".keys/deployer.json"
 # Testler LiteSVM ile süreç içinde çalışır; doğrulayıcı gerekmez:
 #   anchor run test   (ya da: npm test)
 test = "npm test"
+# Yerel doğrulayıcı gerektiren entegrasyon testleri (Kişi 1): npm run test:localnet
+test-localnet = "npm run test:localnet"
