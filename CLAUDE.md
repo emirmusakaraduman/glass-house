@@ -4,7 +4,7 @@ Bu dosya, GlassHouse reposunda çalışan Claude için kalıcı talimatlardır. 
 
 ## Kesin kurallar
 
-- **git commit, git push, branch açma, rebase YAPMA.** Kullanıcı açıkça "commit at" / "pushla" demedikçe yalnızca dosyaları düzenle. Her işin sonunda değişen dosyaların listesini ver.
+- Her işin sonunda değişen dosyaların listesini ver.
 - Devnet deploy, airdrop, mint gibi zincire yazan komutları önce göster, kullanıcı onaylayınca çalıştır.
 - Kapsam: Backend A (para akışı). Kişi 2'nin (Backend B) ve Kişi 3'ün (Frontend) dosyalarına dokunma; ortak arayüz değişecekse önce söyle ve `docs/STATE.md`'yi güncelle.
 - "12 yarım instruction yerine 12 sağlam instruction": her instruction testle birlikte biter.
