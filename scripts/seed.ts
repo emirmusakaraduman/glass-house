@@ -489,6 +489,9 @@ async function main() {
       shareMint: a.shareMint.toBase58(),
       platformTreasury: ata.platform.toBase58(),
       assetType: name,
+      // create-pools.ts bu iki alanı da yazar; burada atlanırsa seed devnet.json'dan siler.
+      minFirstLossBps: COMMON.minFirstLossBps,
+      brakeReserveBps: COMMON.brakeReserveBps,
       maxLtvBps: cfg.maxLtvBps,
       rateBps: cfg.rateBps,
       termMonths: cfg.termMonths,
