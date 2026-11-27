@@ -15,7 +15,8 @@
     "seed:listings": "tsx --env-file=.env.local --conditions=react-server scripts/refresh-seed.ts",
     "listings:images": "tsx scripts/listing-images.ts",
     "demo:screenshots": "tsx scripts/demo-screenshots.ts",
-    "idl:sync": "node -e \"const f=require('fs');f.copyFileSync('../deployments/idl/glasshouse.json','public/idl/glasshouse.json');f.copyFileSync('../deployments/idl/glasshouse.ts','src/lib/chain/idl/glasshouse.ts');console.log('IDL synced')\""
+    "idl:sync": "node -e \"const f=require('fs');f.copyFileSync('../deployments/idl/glasshouse.json','public/idl/glasshouse.json');f.copyFileSync('../deployments/idl/glasshouse.ts','src/lib/chain/idl/glasshouse.ts');console.log('IDL synced')\"",
+    "check:prices": "tsx scripts/check-prices.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
