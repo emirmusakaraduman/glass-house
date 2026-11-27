@@ -254,13 +254,11 @@ and an independent audit.
 
 ## Team
 
-**[TODO: names, roles and links. The three roles below are from the project plan.]**
-
 | Role | Scope | Name |
 |---|---|---|
-| Backend A | money flow: pool, deposit, loan lifecycle, math, NAV, deploy | [TODO] |
-| Backend B | repayment, withdrawals, crank, recovery, risk logic, tests, stress simulation | [TODO] |
-| Frontend | app, listing finder, demo | [TODO] |
+| Backend A | money flow: pool, deposit, loan lifecycle, math, NAV, deploy | [beratvarlik](https://github.com/beratvarlik) |
+| Backend B | repayment, withdrawals, crank, recovery, risk logic, tests, stress simulation | Emir Musa Karaduman ([emirmusakaraduman](https://github.com/emirmusakaraduman)) |
+| Frontend | app, listing finder, demo | Mustafa Baha Faik |
 
 ## License
 
