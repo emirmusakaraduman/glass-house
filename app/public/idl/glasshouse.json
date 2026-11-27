@@ -1,0 +1,3630 @@
+{
+  "address": "HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2",
+  "metadata": {
+    "name": "glasshouse",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "GlassHouse: transparent USDC lending pools on Solana"
+  },
+  "instructions": [
+    {
+      "name": "apply_loan",
+      "discriminator": [
+        126,
+        185,
+        16,
+        204,
+        134,
+        228,
+        95,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "borrower",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "seller",
+          "docs": [
+            "Satıcı da imzalar (alıcı-satıcı danışıklı işlemine karşı); para satıcıya",
+            "ancak confirm_title'da gider."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.next_loan_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "borrower_usdc",
+          "writable": true
+        },
+        {
+          "name": "loan_escrow",
+          "docs": [
+            "Peşinat + açılış ücreti. Authority Pool PDA'sıdır (docs/STATE.md)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_escrow",
+          "docs": [
+            "3 taksitlik teminat; LoanEscrow'dan ayrıdır."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        },
+        {
+          "name": "down_payment",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "approve_loan",
+      "discriminator": [
+        223,
+        27,
+        77,
+        138,
+        94,
+        172,
+        21,
+        209
+      ],
+      "accounts": [
+        {
+          "name": "underwriter",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "borrower",
+          "docs": [
+            "Reject'te kapatılan hesapların rent'i buraya döner."
+          ],
+          "writable": true
+        },
+        {
+          "name": "borrower_usdc",
+          "writable": true
+        },
+        {
+          "name": "loan_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "decision",
+          "type": {
+            "defined": {
+              "name": "Decision"
+            }
+          }
+        },
+        {
+          "name": "appraised_value",
+          "type": "u64"
+        },
+        {
+          "name": "doc_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "asset_ref_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "region_code",
+          "type": "u16"
+        },
+        {
+          "name": "income_ok",
+          "type": "bool"
+        },
+        {
+          "name": "currency_ok",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "cancel_funding",
+      "docs": [
+        "Deadline geçince herkes: anapara vault'a, peşinat + ücret + teminat borçluya."
+      ],
+      "discriminator": [
+        252,
+        83,
+        32,
+        117,
+        64,
+        229,
+        228,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Herkes çağırabilir; yalnızca tx ücretini öder."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "borrower",
+          "docs": [
+            "Kapatılan token hesaplarının rent'i buraya döner."
+          ],
+          "writable": true
+        },
+        {
+          "name": "borrower_usdc",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "confirm_title",
+      "docs": [
+        "Yalnızca title_agent, deadline öncesi: satıcıya ödeme, ücret bölüşümü, Funded → Active."
+      ],
+      "discriminator": [
+        6,
+        244,
+        85,
+        111,
+        193,
+        62,
+        28,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "title_agent",
+          "signer": true,
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seller_usdc",
+          "writable": true
+        },
+        {
+          "name": "reserve_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "crank_loan",
+      "docs": [
+        "Permissionless: Late1 → Late2 → Defaulted, idempotent."
+      ],
+      "discriminator": [
+        198,
+        109,
+        222,
+        43,
+        135,
+        82,
+        174,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "cranker",
+          "docs": [
+            "Herkes çağırabilir; yalnızca tx ücretini öder."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          },
+          "relations": [
+            "loan"
+          ]
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_pool",
+      "discriminator": [
+        233,
+        146,
+        209,
+        142,
+        207,
+        104,
+        64,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              },
+              {
+                "kind": "arg",
+                "path": "params.pool_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "platform_treasury",
+          "docs": [
+            "Açılış ücretinin platform yarısının gideceği USDC hesabı."
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "first_loss_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  105,
+                  114,
+                  115,
+                  116,
+                  95,
+                  108,
+                  111,
+                  115,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "PoolParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "discriminator": [
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "depositor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "depositor_usdc",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "depositor_shares",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "fund_first_loss",
+      "discriminator": [
+        89,
+        24,
+        179,
+        157,
+        49,
+        213,
+        166,
+        60
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin_token_account",
+          "writable": true
+        },
+        {
+          "name": "first_loss_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  105,
+                  114,
+                  115,
+                  116,
+                  95,
+                  108,
+                  111,
+                  115,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "fund_loan",
+      "docs": [
+        "Permissionless: koşullar zincirde, para yalnızca vault → LoanEscrow."
+      ],
+      "discriminator": [
+        50,
+        221,
+        51,
+        13,
+        3,
+        142,
+        116,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Herkes çağırabilir; yalnızca tx ücretini öder."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "loan_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "payoff",
+      "docs": [
+        "Yalnızca borçlu: cezasız erken kapama, teminat iadesi."
+      ],
+      "discriminator": [
+        228,
+        189,
+        202,
+        113,
+        120,
+        138,
+        18,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "borrower",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "loan"
+          ]
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          },
+          "relations": [
+            "loan"
+          ]
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "borrower_usdc",
+          "docs": [
+            "Ödemenin çıktığı ve teminatın iade edildiği hesap."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "collateral",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "process_withdrawals",
+      "docs": [
+        "Permissionless: kuyruktan en fazla 3 talep, işlem anındaki NAV ile."
+      ],
+      "discriminator": [
+        16,
+        191,
+        171,
+        40,
+        159,
+        185,
+        239,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "cranker",
+          "docs": [
+            "Herkes çağırabilir; yalnızca tx ücretini öder."
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_mint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_recovery",
+      "docs": [
+        "Yalnızca recovery_agent: satış geliri + zarar sırası."
+      ],
+      "discriminator": [
+        53,
+        75,
+        21,
+        95,
+        180,
+        26,
+        115,
+        168
+      ],
+      "accounts": [
+        {
+          "name": "recovery_agent",
+          "signer": true,
+          "relations": [
+            "pool"
+          ]
+        },
+        {
+          "name": "co_signer",
+          "docs": [
+            "Alt sınırın altındaki gelirlerde zorunlu ikinci imza (pool.admin). Gerekmezse verilmez."
+          ],
+          "signer": true,
+          "optional": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          },
+          "relations": [
+            "loan"
+          ]
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recovery_source",
+          "docs": [
+            "Satış gelirinin çıktığı hesap (recovery_agent'ın USDC hesabı)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "first_loss",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  105,
+                  114,
+                  115,
+                  116,
+                  95,
+                  108,
+                  111,
+                  115,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "proceeds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "repay",
+      "docs": [
+        "Herkes ödeyebilir: gecikme bedeli → faiz → anapara."
+      ],
+      "discriminator": [
+        234,
+        103,
+        67,
+        82,
+        208,
+        234,
+        219,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          },
+          "relations": [
+            "loan"
+          ]
+        },
+        {
+          "name": "loan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "loan.id",
+                "account": "Loan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer_usdc",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_treasury",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "request_withdraw",
+      "docs": [
+        "Pay sahibi: çekim talebi açar, payları kilitler."
+      ],
+      "discriminator": [
+        137,
+        95,
+        187,
+        96,
+        250,
+        138,
+        31,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool.admin",
+                "account": "Pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.pool_id",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "share_mint",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner_shares",
+          "writable": true
+        },
+        {
+          "name": "destination",
+          "docs": [
+            "Ödemenin gideceği USDC hesabı; talepte sabitlenir."
+          ]
+        },
+        {
+          "name": "share_escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "withdraw_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  114,
+                  101,
+                  113
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              },
+              {
+                "kind": "account",
+                "path": "pool.withdraw_tail",
+                "account": "Pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "shares",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Loan",
+      "discriminator": [
+        20,
+        195,
+        70,
+        117,
+        165,
+        227,
+        182,
+        1
+      ]
+    },
+    {
+      "name": "Pool",
+      "discriminator": [
+        241,
+        154,
+        109,
+        4,
+        17,
+        177,
+        109,
+        188
+      ]
+    },
+    {
+      "name": "WithdrawRequest",
+      "discriminator": [
+        186,
+        239,
+        174,
+        191,
+        189,
+        13,
+        47,
+        196
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Deposited",
+      "discriminator": [
+        111,
+        141,
+        26,
+        45,
+        161,
+        35,
+        100,
+        57
+      ]
+    },
+    {
+      "name": "FirstLossFunded",
+      "discriminator": [
+        195,
+        8,
+        150,
+        92,
+        238,
+        108,
+        173,
+        127
+      ]
+    },
+    {
+      "name": "FundingCancelled",
+      "discriminator": [
+        101,
+        238,
+        217,
+        103,
+        110,
+        16,
+        93,
+        20
+      ]
+    },
+    {
+      "name": "LoanApplied",
+      "discriminator": [
+        22,
+        64,
+        78,
+        220,
+        176,
+        61,
+        27,
+        98
+      ]
+    },
+    {
+      "name": "LoanApproved",
+      "discriminator": [
+        200,
+        165,
+        55,
+        199,
+        125,
+        213,
+        4,
+        243
+      ]
+    },
+    {
+      "name": "LoanCranked",
+      "discriminator": [
+        93,
+        82,
+        225,
+        10,
+        162,
+        24,
+        210,
+        94
+      ]
+    },
+    {
+      "name": "LoanFunded",
+      "discriminator": [
+        94,
+        180,
+        111,
+        215,
+        102,
+        39,
+        198,
+        83
+      ]
+    },
+    {
+      "name": "LoanPaidOff",
+      "discriminator": [
+        114,
+        134,
+        68,
+        131,
+        51,
+        24,
+        131,
+        251
+      ]
+    },
+    {
+      "name": "LoanRejected",
+      "discriminator": [
+        121,
+        124,
+        57,
+        222,
+        3,
+        162,
+        201,
+        212
+      ]
+    },
+    {
+      "name": "LoanRepaid",
+      "discriminator": [
+        202,
+        183,
+        88,
+        60,
+        211,
+        54,
+        142,
+        243
+      ]
+    },
+    {
+      "name": "PoolCreated",
+      "discriminator": [
+        202,
+        44,
+        41,
+        88,
+        104,
+        220,
+        157,
+        82
+      ]
+    },
+    {
+      "name": "RecoveryRecorded",
+      "discriminator": [
+        38,
+        18,
+        5,
+        99,
+        23,
+        64,
+        59,
+        246
+      ]
+    },
+    {
+      "name": "TitleConfirmed",
+      "discriminator": [
+        246,
+        22,
+        39,
+        187,
+        31,
+        88,
+        131,
+        110
+      ]
+    },
+    {
+      "name": "WithdrawProcessed",
+      "discriminator": [
+        234,
+        53,
+        39,
+        68,
+        158,
+        177,
+        195,
+        13
+      ]
+    },
+    {
+      "name": "WithdrawRequested",
+      "discriminator": [
+        114,
+        16,
+        240,
+        206,
+        93,
+        128,
+        151,
+        39
+      ]
+    },
+    {
+      "name": "WithdrawSkipped",
+      "discriminator": [
+        26,
+        65,
+        142,
+        111,
+        35,
+        78,
+        107,
+        43
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Caller is not authorized for this action"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidStatus",
+      "msg": "Loan or pool is not in the required status"
+    },
+    {
+      "code": 6002,
+      "name": "SellerIsBorrower",
+      "msg": "Seller must differ from borrower"
+    },
+    {
+      "code": 6003,
+      "name": "InsufficientDownPayment",
+      "msg": "Down payment is below the minimum required by max LTV"
+    },
+    {
+      "code": 6004,
+      "name": "AppraisalTooLow",
+      "msg": "Principal exceeds max LTV on min(price, appraised value)"
+    },
+    {
+      "code": 6005,
+      "name": "LiquidityBufferBreached",
+      "msg": "Funding would breach the liquidity buffer"
+    },
+    {
+      "code": 6006,
+      "name": "BrakeLateRatio",
+      "msg": "Late/default ratio is above the brake threshold"
+    },
+    {
+      "code": 6007,
+      "name": "BrakeReserve",
+      "msg": "Reserve is below the brake threshold"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientFirstLoss",
+      "msg": "First-loss vault is below the required minimum"
+    },
+    {
+      "code": 6009,
+      "name": "ParamOutOfBounds",
+      "msg": "Pool parameter is out of the allowed bounds"
+    },
+    {
+      "code": 6010,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6011,
+      "name": "TitleDeadlinePassed",
+      "msg": "Title confirmation deadline has passed"
+    },
+    {
+      "code": 6012,
+      "name": "TitleDeadlineNotReached",
+      "msg": "Title confirmation deadline has not been reached yet"
+    },
+    {
+      "code": 6013,
+      "name": "InvariantViolation",
+      "msg": "Accounting invariant violated"
+    },
+    {
+      "code": 6014,
+      "name": "ZeroAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6015,
+      "name": "LoanNotServiceable",
+      "msg": "Loan is not in a status that allows this action"
+    },
+    {
+      "code": 6016,
+      "name": "PeriodAlreadyProcessed",
+      "msg": "This period has already been processed for the loan"
+    },
+    {
+      "code": 6017,
+      "name": "RecoveryBelowFloor",
+      "msg": "Recovery proceeds are below the required floor"
+    },
+    {
+      "code": 6018,
+      "name": "WithdrawQueueEmpty",
+      "msg": "Withdraw queue is empty"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidWithdrawRequest",
+      "msg": "Withdraw request is invalid or out of order"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientIdleCash",
+      "msg": "Not enough idle cash for this action"
+    },
+    {
+      "code": 6021,
+      "name": "InvalidPaymentAmount",
+      "msg": "Payment amount is invalid"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidCoSigner",
+      "msg": "Co-signer is missing or invalid"
+    }
+  ],
+  "types": [
+    {
+      "name": "AssetType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "House"
+          },
+          {
+            "name": "Vehicle"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Decision",
+      "docs": [
+        "Tek karar girdisi: approve_loan(decision, ...)"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Approve"
+          },
+          {
+            "name": "Reject"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Deposited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "depositor",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          },
+          {
+            "name": "shares_minted",
+            "type": "u64"
+          },
+          {
+            "name": "total_shares",
+            "type": "u64"
+          },
+          {
+            "name": "senior_nav",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FirstLossFunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "first_loss_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FundingCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "returned_to_vault",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Loan",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "borrower",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "appraised_value",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "rate_bps",
+            "type": "u16"
+          },
+          {
+            "name": "installment",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_principal",
+            "type": "u64"
+          },
+          {
+            "name": "paid_installments",
+            "type": "u16"
+          },
+          {
+            "name": "missed_installments",
+            "type": "u16"
+          },
+          {
+            "name": "next_due",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "LoanStatus"
+              }
+            }
+          },
+          {
+            "name": "doc_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "asset_ref_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "value_band",
+            "type": "u64"
+          },
+          {
+            "name": "region_code",
+            "type": "u16"
+          },
+          {
+            "name": "income_ok",
+            "type": "bool"
+          },
+          {
+            "name": "currency_ok",
+            "type": "bool"
+          },
+          {
+            "name": "provision_amount",
+            "type": "u64"
+          },
+          {
+            "name": "late_fee_accrued",
+            "type": "u64"
+          },
+          {
+            "name": "last_processed_period",
+            "type": "u64"
+          },
+          {
+            "name": "funded_at",
+            "type": "i64"
+          },
+          {
+            "name": "title_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "escrow_bump",
+            "type": "u8"
+          },
+          {
+            "name": "collateral_bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanApplied",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "borrower",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "installment",
+            "type": "u64"
+          },
+          {
+            "name": "escrow_amount",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanApproved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "appraised_value",
+            "type": "u64"
+          },
+          {
+            "name": "value_band",
+            "type": "u64"
+          },
+          {
+            "name": "region_code",
+            "type": "u16"
+          },
+          {
+            "name": "doc_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "asset_ref_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanCranked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "cranker",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_status",
+            "type": "u8"
+          },
+          {
+            "name": "new_status",
+            "type": "u8"
+          },
+          {
+            "name": "missed_installments",
+            "type": "u16"
+          },
+          {
+            "name": "collateral_used",
+            "type": "u64"
+          },
+          {
+            "name": "provision_amount",
+            "type": "u64"
+          },
+          {
+            "name": "provision_delta",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanFunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "title_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "idle_cash",
+            "type": "u64"
+          },
+          {
+            "name": "total_outstanding",
+            "type": "u64"
+          },
+          {
+            "name": "reserve_pending",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanPaidOff",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_returned",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanRejected",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "refunded",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanRepaid",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "late_fee",
+            "type": "u64"
+          },
+          {
+            "name": "interest",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_principal",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "docs": [
+              "Durum (LoanStatus indeksi) ödeme sonrası."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "next_due",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LoanStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Approved"
+          },
+          {
+            "name": "Rejected"
+          },
+          {
+            "name": "Funded"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Late1"
+          },
+          {
+            "name": "Late2"
+          },
+          {
+            "name": "Defaulted"
+          },
+          {
+            "name": "Recovered"
+          },
+          {
+            "name": "PaidOff"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset_type",
+            "type": {
+              "defined": {
+                "name": "AssetType"
+              }
+            }
+          },
+          {
+            "name": "underwriter",
+            "type": "pubkey"
+          },
+          {
+            "name": "title_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "recovery_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "platform_treasury",
+            "docs": [
+              "Açılış ücretinin platform yarısının gideceği USDC hesabı."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_id",
+            "type": "u64"
+          },
+          {
+            "name": "max_ltv_bps",
+            "type": "u16"
+          },
+          {
+            "name": "rate_bps",
+            "type": "u16"
+          },
+          {
+            "name": "term_months",
+            "type": "u16"
+          },
+          {
+            "name": "recovery_coeff_bps",
+            "type": "u16"
+          },
+          {
+            "name": "grace_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "period_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "provision_bps",
+            "type": {
+              "array": [
+                "u16",
+                4
+              ]
+            }
+          },
+          {
+            "name": "buffer_bps",
+            "type": "u16"
+          },
+          {
+            "name": "brake_late_bps",
+            "type": "u16"
+          },
+          {
+            "name": "brake_reserve_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_first_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "entry_exit_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_recovery_bps",
+            "type": "u16"
+          },
+          {
+            "name": "title_timeout_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "next_loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "idle_cash",
+            "type": "u64"
+          },
+          {
+            "name": "total_outstanding",
+            "type": "u64"
+          },
+          {
+            "name": "late_default_principal",
+            "type": "u64"
+          },
+          {
+            "name": "loss_provision",
+            "type": "u64"
+          },
+          {
+            "name": "first_loss_balance",
+            "type": "u64"
+          },
+          {
+            "name": "reserve_balance",
+            "type": "u64"
+          },
+          {
+            "name": "reserve_pending",
+            "docs": [
+              "Fonlanmış ama tescili onaylanmamış kredilerin yedek fon payı. Yalnızca fren",
+              "hesabında kullanılır, NAV'a girmez (karar 1)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_shares",
+            "type": "u64"
+          },
+          {
+            "name": "withdraw_head",
+            "docs": [
+              "Çekim kuyruğu (Kişi 2)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "withdraw_tail",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "PoolStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "first_loss_bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserve_bump",
+            "type": "u8"
+          },
+          {
+            "name": "share_mint_bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset_type",
+            "type": "u8"
+          },
+          {
+            "name": "max_ltv_bps",
+            "type": "u16"
+          },
+          {
+            "name": "rate_bps",
+            "type": "u16"
+          },
+          {
+            "name": "term_months",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool_id",
+            "type": "u64"
+          },
+          {
+            "name": "asset_type",
+            "type": {
+              "defined": {
+                "name": "AssetType"
+              }
+            }
+          },
+          {
+            "name": "underwriter",
+            "type": "pubkey"
+          },
+          {
+            "name": "title_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "recovery_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_ltv_bps",
+            "type": "u16"
+          },
+          {
+            "name": "rate_bps",
+            "type": "u16"
+          },
+          {
+            "name": "term_months",
+            "type": "u16"
+          },
+          {
+            "name": "recovery_coeff_bps",
+            "type": "u16"
+          },
+          {
+            "name": "grace_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "period_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "provision_bps",
+            "docs": [
+              "[Active, Late1, Late2, Defaulted-taban]; azalmayan, ≤ 10000."
+            ],
+            "type": {
+              "array": [
+                "u16",
+                4
+              ]
+            }
+          },
+          {
+            "name": "buffer_bps",
+            "type": "u16"
+          },
+          {
+            "name": "brake_late_bps",
+            "type": "u16"
+          },
+          {
+            "name": "brake_reserve_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_first_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "entry_exit_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_recovery_bps",
+            "type": "u16"
+          },
+          {
+            "name": "title_timeout_seconds",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RecoveryRecorded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "proceeds",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_used",
+            "type": "u64"
+          },
+          {
+            "name": "loss",
+            "type": "u64"
+          },
+          {
+            "name": "first_loss_used",
+            "type": "u64"
+          },
+          {
+            "name": "reserve_used",
+            "type": "u64"
+          },
+          {
+            "name": "senior_loss",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TitleConfirmed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan",
+            "type": "pubkey"
+          },
+          {
+            "name": "loan_id",
+            "type": "u64"
+          },
+          {
+            "name": "paid_to_seller",
+            "type": "u64"
+          },
+          {
+            "name": "reserve_balance",
+            "type": "u64"
+          },
+          {
+            "name": "next_due",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawProcessed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "request",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          },
+          {
+            "name": "gross",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          },
+          {
+            "name": "net",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawRequest",
+      "docs": [
+        "Tek bir çekim talebi. Paylar `share_escrow`'a kilitlenir; process_withdrawals FIFO sırayla",
+        "işlem anındaki NAV ile öder, payları yakar ve hesabı kapatır (kira `owner`'a döner)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "destination",
+            "docs": [
+              "Ödemenin gideceği USDC token hesabı (talep anında sabitlenir)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "request",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawSkipped",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "request",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}
