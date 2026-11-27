@@ -118,7 +118,8 @@ const POOL_CFG = {
     recoveryCoeffBps: 6300,
     borrower: "borrowerMaria" as Role,
     firstLoss: 50_000n * USDC,
-    deposits: { investorA: 450_000n * USDC, investorB: 350_000n * USDC },
+    // 10 ev kredisi ≈ 721.000 USD anapara; likidite tamponu (%10) için yatırım ≥ ≈ 810.000 gerekir.
+    deposits: { investorA: 500_000n * USDC, investorB: 400_000n * USDC },
   },
   vehicle: {
     baseId: 2,
