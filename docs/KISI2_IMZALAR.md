@@ -1,7 +1,7 @@
-# Kişi 2 instruction imzaları (taslak v0.1)
+# Kişi 2 instruction imzaları (v0.2)
 
-Durum: Altı instruction derleniyor, gövdeler boş (`Ok(())`). Anchor 0.32.1 IDL'ine giriyor:
-6 instruction, `WithdrawRequest` hesabı ve 7 event. Hesap listeleri ve argümanlar IDL dondurulana kadar sabit.
+Durum: Altı instruction yazıldı ve test edildi (91 LiteSVM + 51 Rust testi). Anchor 0.32.1 IDL'inde:
+6 instruction, `WithdrawRequest` hesabı ve 7 event. Hesap listeleri ve argümanlar sabit.
 
 Dosyalar: `programs/glasshouse/src/instructions/{repay,payoff,request_withdraw,process_withdrawals,crank_loan,record_recovery}.rs`,
 `programs/glasshouse/src/lifecycle/{mod,state,events,errors,provision,waterfall}.rs`
@@ -45,7 +45,8 @@ STATE.md'de `Loan.reserved [u8; 64]` Kişi 2'ye ayrılmış. Struct ve IDL deği
 | Bayt | Alan | Tip | Anlam |
 |---|---|---|---|
 | 0..8 | `collateral_deducted` | u64 LE | crank'in CollateralEscrow'dan kestiği toplam (Late2 adımı) |
-| 8..64 | — | 0 | boş |
+| 8..16 | `interest_settled` | u64 LE | bu gecikme döngüsünde teminattan ödenen faiz; temerrütte birikmiş faizden düşülür, repay/kapanışta sıfırlanır |
+| 16..64 | — | 0 | boş |
 
 Neden: Late2'deki kredi ödeyip Active'e dönünce teminat 2 taksitte kalır; bu açık `last_processed_period`'dan
 türetilemez. Erişim: `lifecycle::state::loan_ext::{collateral_deducted, set_collateral_deducted}`.

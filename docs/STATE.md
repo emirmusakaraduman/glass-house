@@ -104,7 +104,10 @@ Geçişler: `Pending→Approved|Rejected`, `Approved→Funded`, `Funded→Active
 
 **`Loan.reserved` kullanımı (Kişi 2):** `reserved[0..8]` = `collateral_deducted` (u64 LE), crank'in
 Late2 adımında CollateralEscrow'dan kestiği toplam tutar. Beklenen teminat = `3 × installment −
-collateral_deducted`. Struct ve IDL değişmez; kalan 56 bayt boş. Kaynak: `lifecycle::state::loan_ext`.
+collateral_deducted`. `reserved[8..16]` = `interest_settled` (u64 LE), bu gecikme döngüsünde teminattan
+ödenen FAİZ; temerrütte birikmiş faizden düşülür (aynı ayın faizi iki kez sayılmasın), gecikmeden
+çıkışta (repay) ve kapanışta sıfırlanır. Struct ve IDL değişmez; kalan 48 bayt boş.
+Kaynak: `lifecycle::state::loan_ext`.
 
 Escrow tutarı kredi alanlarından türetilir (ayrı alan yok): peşinat = `price − principal`,
 ücret = `origination_fee(principal)` (anaparanın %1'i, yukarı), teminat = `3 × installment`.
