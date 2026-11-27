@@ -56,15 +56,24 @@ limits".
 
 ## How we used Firecrawl
 
-**[CONFIRM: describe only what is actually built and working. The text below is the v4 design.]**
+The listing finder turns a borrower's income and savings into a maximum price with a rule-based
+calculation that runs in the browser. Only the asset type, city and price range go to our server
+route (`/api/listings`); income and savings never leave the browser. Choosing a listing pre-fills
+the `apply_loan` form with its price, and the listing URL is never written on-chain: only a salted
+hash goes on-chain.
 
-The listing finder (frontend, server side) turns a borrower's budget into a maximum price with a
-rule-based calculation, then uses Firecrawl to fetch real house or vehicle listings below that
-price from selected Panama listing sites. Only the property type, city and price range are sent to
-Firecrawl; income and savings stay in the browser. Choosing a listing pre-fills the `apply_loan`
-form with its price. The listing URL is never written on-chain; only a salted hash and a value
-band are. Queries are cached for 15 minutes, and a labelled sample data set ("EXAMPLE DATA") is
-used if a live call fails, so the demo never depends on live scraping.
+The server route is built to call Firecrawl's scrape endpoint with a JSON schema for houses or
+cars and a prompt that forbids inventing listings. It keeps only items whose link really appears
+on the scraped page, reads Panama price formats such as "$ 95,000", "B/. 95.000" and "US$95k"
+(covered by `npm run check:prices`), caches results for 15 minutes, and falls back to sample data
+on any error or after 8 seconds. The API key stays on the server, and live search is limited to
+Panama City.
+
+No live source is switched on. We read the terms of the two Panama sites we planned to use, and
+both forbid automated access: Encuentra24 (section 11 bans bots, crawlers and scraping) and
+Compreoalquile (section 1.5.1 bans any tool other than the site's own search, and copying its
+data). So the demo shows hand-made listings with a visible "Sample data" label, and a site whose
+terms allow it can be added later in configuration, without code changes.
 
 ## Links
 
