@@ -230,13 +230,14 @@ export function useTimeline(containerRef: RefObject<HTMLElement | null>): Timeli
  * Eases `cur` toward `target` (~90 ms time constant) with a linear floor, so any jump lands
  * exactly on the target within ~300 ms and the last frame shows the computed number, not a near miss.
  */
-export function approach(cur: number, target: number, dt: number, instant: boolean, snap = 0.005): number {
+export function approach(cur: number, target: number, dt: number, instant: boolean, snap = 0.005, scale?: number): number {
   if (instant) return target;
   const diff = target - cur;
   if (Math.abs(diff) <= snap) return target;
   if (dt === 0) return cur + diff * 0.35;
   const eased = diff * (1 - Math.exp(-dt / 90));
-  const floor = ((Math.abs(target) + Math.abs(cur)) * dt) / 300;
+  // `scale` is the value's full range, so even the last few dollars move at a steady pace.
+  const floor = ((scale ?? Math.abs(target) + Math.abs(cur)) * dt) / 300;
   const step = Math.sign(diff) * Math.max(Math.abs(eased), Math.min(Math.abs(diff), floor));
   const next = cur + step;
   return Math.abs(target - next) <= snap ? target : next;

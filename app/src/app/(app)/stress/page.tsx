@@ -1,13 +1,13 @@
 "use client";
 
-import { AlertTriangle, Building2, Car, Home, RotateCcw, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Building2, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { LossStack } from "@/components/LossStack";
-import { RunButton, TimelineBar } from "@/components/stress/CrashControls";
+import { ControlStrip, type SliderSpec } from "@/components/stress/CrashControls";
 import { CrashSide } from "@/components/stress/CrashSide";
 import { useTimeline } from "@/components/stress/useTimeline";
-import { Button, Note, Pane, PaneTitle, Row, Segmented, cx } from "@/components/ui";
+import { Note, Pane, PaneTitle, Row, cx } from "@/components/ui";
 import { pct, usd } from "@/lib/format";
 import { HOUSE_STRESS_BASE, VEHICLE_STRESS_BASE, lender2008, leveragedBank, runStress, type StressResult, type StressScenario } from "@/lib/stress";
 import { buildTimeline, frameAt } from "@/lib/stressTimeline";
@@ -47,7 +47,31 @@ export default function StressPage() {
   };
 
   const simRef = useRef<HTMLDivElement | null>(null);
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  const panelsRef = useRef<HTMLDivElement | null>(null);
   const engine = useTimeline(simRef);
+
+  // The strip sticks right under the sticky top bar (lg+); its height can change, so measure it.
+  useEffect(() => {
+    const bar = document.querySelector("main")?.previousElementSibling as HTMLElement | null;
+    if (!bar) return;
+    const set = () => document.documentElement.style.setProperty("--gh-topbar-h", `${bar.getBoundingClientRect().height}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, []);
+
+  /** On Run: if the panels aren't fully in view, scroll them up under the strip (instantly with reduced motion). */
+  const revealPanels = () => {
+    const panels = panelsRef.current;
+    const strip = stripRef.current;
+    if (!panels || !strip || present) return;
+    const top = strip.getBoundingClientRect().bottom + 12;
+    const r = panels.getBoundingClientRect();
+    if (r.top >= top - 1 && r.bottom <= window.innerHeight) return;
+    window.scrollBy({ top: r.top - top, behavior: engine.reducedMotion ? "auto" : "smooth" });
+  };
   const { toggle, play } = engine;
 
   // ?present=1: full-screen view for the video, starts on its own after a second.
@@ -106,125 +130,102 @@ export default function StressPage() {
   const oldVerdict = verdictOf(oldR, 1);
   const showBreakEven = tab === "house" && defaults > 0 && gh.breakEvenDrop > 0 && gh.breakEvenDrop < 0.6;
 
+  const sliders: SliderSpec[] = [
+    {
+      key: "drop",
+      label: `${asset === "home" ? "Home" : "Car"} price drop`,
+      value: drop,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      display: pct(drop, 0),
+      onChange: setDrop,
+      marker: showBreakEven ? { at: gh.breakEvenDrop, label: "Investors start losing here", detail: `at about ${pct(gh.breakEvenDrop, 1)}` } : undefined,
+    },
+    { key: "defaults", label: "Defaults", value: defaults, min: 0, max: 50, step: 1, display: `${defaults}`, unit: `of ${s.loans}`, onChange: setDefaults },
+    { key: "cost", label: "Sale and legal costs", value: cost, min: 0.05, max: 0.25, step: 0.01, display: pct(cost, 0), onChange: setCost },
+  ];
+
+  const strip = (
+  <ControlStrip
+    engine={engine}
+    pool={tab}
+    onPool={(v) => {
+      setTab(v);
+      setDrop(DOC.drop);
+    }}
+    sliders={sliders}
+    onReset={resetToDoc}
+    resetDisabled={atDoc}
+    onStart={revealPanels}
+    present={present}
+    stripRef={stripRef}
+  />
+  );
+
   const sim = (
-      <div ref={simRef} className={cx(present ? "mx-auto max-w-[1840px] space-y-4" : "space-y-6")}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {present ? <h1 className="title text-gradient mr-2 text-[28px]">Stress test</h1> : null}
-            <Segmented
-              label="Pool"
-              value={tab}
-              onChange={(v) => {
-                setTab(v);
-                setDrop(DOC.drop);
-              }}
-              options={[
-                { value: "house", label: "Home pool", icon: Home },
-                { value: "vehicle", label: "Car pool", icon: Car },
-              ]}
-            />
-            {tab === "vehicle" ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-warn/40 bg-warn/10 px-2.5 py-0.5 text-[13px] font-semibold text-warn">
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Estimate
-              </span>
-            ) : null}
-          </div>
-          {present ? null : (
-            <p className="max-w-[60ch] text-sm text-muted">{`Take ${s.loans} ${asset} loans, let some default, drop prices, and watch the loss walk through every layer. The same crash runs next to a 2008-style lender.`}</p>
-          )}
-        </div>
+    <div ref={simRef} className="space-y-4">
 
-        {tab === "vehicle" && !present ? (
-          <Note tone="warn">
-            Car figures are an estimate. Damage, theft, cars that can&apos;t be found and used-car discounts are not modeled, so we don&apos;t claim a break-even point for cars.
-          </Note>
-        ) : null}
-
-        {/* ------------------------------------------------------------ sliders + the one gold button */}
-        <section aria-labelledby="scenario-title" className="space-y-3">
-          {present ? null : (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="scenario-title" className="title text-2xl">
-                Scenario
-              </h2>
-              <Button variant="quiet" size="sm" onClick={resetToDoc} disabled={atDoc}>
-                <RotateCcw className="h-4 w-4" aria-hidden />
-                Reset to the doc&apos;s scenario
-              </Button>
-            </div>
-          )}
-          {present ? (
-            <h2 id="scenario-title" className="sr-only">
-              Scenario
-            </h2>
-          ) : null}
-          <div className="grid items-center gap-4 md:grid-cols-3 xl:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
-            <SliderCard
-              compact={present}
-              label={`${asset === "home" ? "Home" : "Car"} price drop at sale`}
-              value={drop}
-              min={0}
-              max={0.6}
-              step={0.01}
-              display={pct(drop, 0)}
-              onChange={setDrop}
-              marker={showBreakEven ? { at: gh.breakEvenDrop, label: "Investors start losing here", detail: `at about ${pct(gh.breakEvenDrop, 1)}` } : undefined}
-            />
-            <SliderCard compact={present} label="Loans that default" value={defaults} min={0} max={50} step={1} display={`${defaults}`} unit={`of ${s.loans}`} onChange={setDefaults} />
-            <SliderCard compact={present} label="Sale and legal costs" value={cost} min={0.05} max={0.25} step={0.01} display={pct(cost, 0)} onChange={setCost} />
-            <div className="flex justify-center md:col-span-3 xl:col-span-1">
-              <RunButton engine={engine} className="w-full sm:w-auto" />
-            </div>
-          </div>
-        </section>
-
-        <TimelineBar engine={engine} asset={asset} />
-
-        {/* ------------------------------------------------------------ the two sides, one clock */}
-        <div className={cx("grid items-start gap-6", present ? "grid-cols-2 gap-5" : "xl:grid-cols-2")}>
-          <CrashSide
-            title="GlassHouse"
-            subtitle={`max LTV ${pct(s.loanSize / s.price, 0)}, first-loss ${usd(s.firstLossVault, { compact: true })}`}
-            icon={ShieldCheck}
-            tone="accent"
-            timeline={ghTl}
-            kind={tab}
-            engine={engine}
-            verdict={ghVerdict}
-            compact={present}
-          />
-          <CrashSide
-            title="2008-style lender"
-            subtitle="same program, LTV 97%, no first-loss, no reserve"
-            icon={Building2}
-            tone="bad"
-            timeline={oldTl}
-            kind={tab}
-            engine={engine}
-            verdict={oldVerdict}
-            compact={present}
-          />
-        </div>
-        <p className="text-[12.5px] text-muted">
-          Model calculation with the same assumptions as the design doc. Every defaulted {asset} is sold at the scenario&apos;s price drop; the curve shows the market getting there.
-        </p>
-        <p className="sr-only" aria-live="polite">
-          {said}
-        </p>
+      {/* ------------------------------------------------------------ the two sides, one clock */}
+      <div ref={panelsRef} className={cx("grid items-start gap-4", present ? "grid-cols-2 gap-5" : "xl:grid-cols-2")}>
+        <CrashSide
+          title="GlassHouse"
+          subtitle={`max LTV ${pct(s.loanSize / s.price, 0)}, first-loss ${usd(s.firstLossVault, { compact: true })}`}
+          icon={ShieldCheck}
+          tone="accent"
+          timeline={ghTl}
+          kind={tab}
+          engine={engine}
+          verdict={ghVerdict}
+          size={present ? "present" : "page"}
+        />
+        <CrashSide
+          title="2008-style lender"
+          subtitle="Same program at LTV 97%, no first-loss"
+          icon={Building2}
+          tone="bad"
+          timeline={oldTl}
+          kind={tab}
+          engine={engine}
+          verdict={oldVerdict}
+          size={present ? "present" : "page"}
+        />
       </div>
+      <p className="text-[12.5px] text-muted">
+        Model calculation with the same assumptions as the design doc. Every defaulted {asset} is sold at the scenario&apos;s price drop; the curve shows the market getting there.
+      </p>
+      <p className="sr-only" aria-live="polite">
+        {said}
+      </p>
+    </div>
   );
 
   // The presentation view goes straight into <body>: a parent with a transform would trap `fixed`.
   if (present) {
-    return createPortal(<div className="fixed inset-0 z-[70] overflow-y-auto bg-frost px-6 py-5 xl:px-10">{sim}</div>, document.body);
+    return createPortal(
+      <div className="fixed inset-0 z-[70] overflow-y-auto bg-frost px-6 py-5 xl:px-10">
+        <div className="mx-auto max-w-[1840px] space-y-4">
+          <h1 className="title text-gradient text-[28px] leading-none">Stress test: the same crash, two lenders</h1>
+          {strip}
+          {sim}
+        </div>
+      </div>,
+      document.body,
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {strip}
       {sim}
+      <div className="h-2" aria-hidden />
       {/* Below the animation; hidden in the presentation view. */}
         <>
+          {tab === "vehicle" ? (
+            <Note tone="warn">
+              Car figures are an estimate. Damage, theft, cars that can&apos;t be found and used-car discounts are not modeled, so we don&apos;t claim a break-even point for cars.
+            </Note>
+          ) : null}
           {/* ------------------------------------------------------------ the numbers (same as the last frame) */}
           <div className="grid items-start gap-6 lg:grid-cols-2">
             <Pane className={cx(gh.toInvestors > 0 ? "border-bad/35" : "border-ok/30")}>
@@ -369,66 +370,5 @@ function SensitivityTable({ base, tab }: { base: StressScenario; tab: Tab }) {
         </tbody>
       </table>
     </Pane>
-  );
-}
-
-function SliderCard({
-  label,
-  value,
-  min,
-  max,
-  step,
-  display,
-  unit,
-  onChange,
-  marker,
-  compact = false,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  display: string;
-  unit?: string;
-  onChange: (v: number) => void;
-  marker?: { at: number; label: string; detail: string };
-  compact?: boolean;
-}) {
-  const fill = ((value - min) / (max - min)) * 100;
-  const markAt = marker ? ((marker.at - min) / (max - min)) * 100 : null;
-  return (
-    <label className={cx("pane block", compact ? "px-5 py-3" : "p-5")}>
-      <span className="dense block text-[13px] text-muted">{label}</span>
-      <span className="mt-1 flex items-baseline gap-1.5">
-        <span className={cx("display num text-gradient", compact ? "text-[32px]" : "text-[40px]")}>{display}</span>
-        {unit ? <span className="text-sm text-muted">{unit}</span> : null}
-      </span>
-      <span className="relative mt-3 block">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="gh-range block"
-          style={{ ["--fill" as string]: `${fill}%` }}
-          aria-valuetext={unit ? `${display} ${unit}` : display}
-          aria-describedby={marker ? "breakeven-hint" : undefined}
-        />
-        {markAt !== null ? <span className="gh-mark pointer-events-none" style={{ left: `calc(9px + (100% - 18px) * ${markAt / 100})` }} title={`${marker?.label} (${marker?.detail})`} aria-hidden /> : null}
-      </span>
-      <span className="relative mt-1 flex justify-between text-[12px] text-muted" aria-hidden={!marker}>
-        <span aria-hidden>{step < 1 ? pct(min, 0) : min}</span>
-        {marker ? (
-          <span id="breakeven-hint" className="text-center text-bad-fg">
-            ▲ {marker.label}
-            <span className="sr-only"> {marker.detail}</span>
-          </span>
-        ) : null}
-        <span aria-hidden>{step < 1 ? pct(max, 0) : max}</span>
-      </span>
-    </label>
   );
 }

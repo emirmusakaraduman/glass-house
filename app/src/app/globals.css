@@ -1175,8 +1175,14 @@ svg.ghh-layer {
 .gh-loan[data-s="sold"] .gh-loan-body { fill: rgb(148 163 184 / 0.08); stroke: rgb(148 163 184 / 0.45); }
 .gh-loan[data-s="sold"] .gh-loan-wheels { fill: rgb(148 163 184 / 0.45); }
 .gh-loan[data-s="sold"] .gh-loan-sold { opacity: 1; }
-.gh-loan .gh-loan-sold rect { fill: rgb(11 17 32 / 0.85); stroke: rgb(148 163 184 / 0.5); stroke-width: 0.8; }
-.gh-loan .gh-loan-sold text { fill: var(--color-ink); font-size: 6.8px; font-weight: 800; letter-spacing: 0.06em; }
+.gh-loan .gh-loan-sold { fill: rgb(203 213 225 / 0.85); }
+.gh-loan[data-s="sold"] { opacity: 0.55; }
+/* Legend swatches under the grid */
+.gh-key { display: inline-block; width: 9px; height: 9px; border-radius: 3px; border: 1.5px solid; }
+.gh-key-ok { border-color: var(--color-accent); background: rgb(0 210 255 / 0.16); }
+.gh-key-late { border: none; width: 0; height: 0; border-radius: 0; border-left: 5.5px solid transparent; border-right: 5.5px solid transparent; border-bottom: 10px solid var(--color-warn); }
+.gh-key-bad { border-color: var(--color-bad); background: rgb(244 63 94 / 0.4); }
+.gh-key-sold { border-color: rgb(148 163 184 / 0.6); background: linear-gradient(225deg, rgb(203 213 225 / 0.85) 0 35%, transparent 35%); }
 @keyframes gh-throb {
   from { opacity: 1; }
   to { opacity: 0.55; }
@@ -1188,15 +1194,8 @@ svg.ghh-layer {
 .gh-tank[data-senior="1"] .gh-tank-rim { stroke: rgb(125 230 255 / 0.55); stroke-width: 2.2; }
 .gh-tank[data-empty="1"] .gh-tank-rim { stroke: rgb(244 63 94 / 0.6); }
 .gh-tank[data-none="1"] .gh-tank-rim { stroke-dasharray: 5 5; stroke: rgb(255 255 255 / 0.18); }
-.gh-tank-name { fill: var(--color-muted); font-size: 11.5px; font-weight: 600; }
-.gh-tank[data-senior="1"] .gh-tank-name { fill: var(--color-ink); font-size: 13px; font-weight: 700; }
-.gh-tank-amount { fill: var(--color-muted); font-size: 12.5px; font-weight: 700; }
-.gh-tank-amount[data-hit="1"] { fill: var(--color-bad-fg); }
-@media (max-width: 640px) {
-  .gh-tank-name { font-size: 13.5px; }
-  .gh-tank[data-senior="1"] .gh-tank-name { font-size: 14.5px; }
-  .gh-tank-amount { font-size: 14.5px; }
-}
+.gh-tank-amount { color: var(--color-muted); }
+.gh-tank-amount[data-hit="1"] { color: var(--color-bad-fg); }
 .gh-wave {
   fill: var(--color-accent-light);
   fill-opacity: 0.85;
@@ -1224,7 +1223,7 @@ svg.ghh-layer {
 .gh-price-base { stroke: rgb(255 255 255 / 0.12); stroke-dasharray: 3 4; }
 .gh-price-ghost { stroke: rgb(255 255 255 / 0.12); stroke-width: 1.5; }
 .gh-price-line { stroke: var(--color-bad-fg); stroke-width: 2.2; stroke-linejoin: round; }
-.gh-price-dot { fill: var(--color-bad-fg); }
+.gh-price-dot { stroke: var(--color-bad-fg); stroke-width: 7; stroke-linecap: round; fill: none; }
 
 /* Loss particles */
 .gh-particle { fill: var(--color-bad); filter: drop-shadow(0 0 3px rgb(244 63 94 / 0.8)); }
@@ -1272,3 +1271,26 @@ svg.ghh-layer {
   background: var(--color-bad-fg);
   transform: translate(-1.5px, -50%);
 }
+
+/* Compact range for the /stress control strip: thin track, 16px thumb. */
+.gh-range.gh-range-sm { height: 20px; }
+.gh-range.gh-range-sm::-webkit-slider-runnable-track { height: 6px; }
+.gh-range.gh-range-sm::-moz-range-track { height: 6px; }
+.gh-range.gh-range-sm::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -5px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / 0.25); }
+.gh-range.gh-range-sm::-moz-range-thumb { width: 12px; height: 12px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / 0.25); }
+.gh-range.gh-range-sm:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / 0.85); }
+.gh-range.gh-range-sm:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / 0.85); }
+
+/* Sticky control strip: right under the sticky top bar on lg, at the top on smaller screens. */
+.gh-strip {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: rgb(11 17 32 / 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+@media (min-width: 1024px) {
+  .gh-strip { top: var(--gh-topbar-h, 0px); }
+}
+.gh-mark.gh-mark-sm { height: 14px; width: 3px; }
