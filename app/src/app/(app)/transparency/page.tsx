@@ -133,7 +133,7 @@ export default function TransparencyPage() {
                 <Stat label="Lent out" value={usd(p.outstandingPrincipal, { compact: true })} />
                 <Stat label="Late or defaulted" value={pct(m.delinquencyRatio, 1)} tone={m.delinquencyRatio > p.params.brakeDelinquency ? "bad" : m.delinquencyRatio > 0 ? "warn" : "ok"} />
                 <Stat label="First-loss cover" value={pct(p.outstandingPrincipal ? p.firstLossVault / p.outstandingPrincipal : 0, 2)} hint={`min ${pct(p.params.firstLossTarget, 0)}`} />
-                <Stat label="Reserve" value={pct(p.outstandingPrincipal ? p.reserve / p.outstandingPrincipal : 0, 2)} hint={`brake below ${pct(p.params.brakeReserveMin, 0)}`} />
+                <Stat label="Reserve" value={pct(p.outstandingPrincipal ? p.reserve / p.outstandingPrincipal : 0, 2)} hint={`brake below ${pct(p.params.brakeReserveMin, Number.isInteger(p.params.brakeReserveMin * 100) ? 0 : 2)}`} />
               </div>
               <PoolLossStack pool={p} metrics={m} />
               {m.brakeReason ? (

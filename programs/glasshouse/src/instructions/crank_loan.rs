@@ -24,7 +24,9 @@ use crate::constants::*;
 use crate::errors::GlassError;
 use crate::lifecycle::events::LoanCranked;
 use crate::lifecycle::provision::{apply_provision_change, target_provision, DefaultInputs};
-use crate::lifecycle::schedule::{late_fee, missed_installments, pending_steps, status_for_missed};
+use crate::lifecycle::schedule::{
+    late_fee, missed_installments, pending_steps, status_for_missed, unpaid_accrued_interest,
+};
 use crate::lifecycle::state::loan_ext;
 use crate::math;
 use crate::nav::{assert_escrow_covers, assert_vault_covers_idle};
@@ -160,9 +162,11 @@ pub fn crank_loan_handler(mut ctx: Context<CrankLoan>) -> Result<()> {
         .checked_sub(collateral_used)
         .ok_or(GlassError::InvariantViolation)?
         .min(expected_collateral(loan)?);
-    let accrued_interest = math::interest_for_period(loan.remaining_principal, loan.rate_bps)?
-        .checked_mul(missed.min(3))
-        .ok_or(GlassError::MathOverflow)?;
+    let accrued_interest = unpaid_accrued_interest(
+        math::interest_for_period(loan.remaining_principal, loan.rate_bps)?,
+        missed.min(3),
+        loan_ext::interest_settled(loan),
+    )?;
     let target = target_provision(
         new_status,
         loan.remaining_principal,
@@ -270,5 +274,10 @@ fn deduct_installment_from_collateral(ctx: &mut Context<CrankLoan>) -> Result<u6
         .checked_add(applied)
         .ok_or(GlassError::MathOverflow)?;
     loan_ext::set_collateral_deducted(loan, deducted);
+    // Teminattan ödenen faiz: temerrütte birikmiş faizden düşülür (aynı ay iki kez sayılmasın).
+    let settled = loan_ext::interest_settled(loan)
+        .checked_add(split.interest)
+        .ok_or(GlassError::MathOverflow)?;
+    loan_ext::set_interest_settled(loan, settled);
     Ok(applied)
 }

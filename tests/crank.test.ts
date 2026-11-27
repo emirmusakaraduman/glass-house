@@ -1,4 +1,11 @@
+// crank_loan testleri (fixture ile; period_seconds = 60, grace_seconds = 10).
+//
+// - Durum Clock'tan türetilir; aynı dönem ikinci kez işlenmez (idempotent).
+// - Gecikme sırası: Active → Late1 → Late2 → Defaulted. İzinsiz: "yabancı" cüzdan çağırır.
+// - Her testin sonunda assertInvariants çağrılır (başarısız çağrılar dahil).
+
 import { expect } from "chai";
+import { EventParser } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import {
   assertInvariants,
@@ -6,6 +13,7 @@ import {
   crankLoanIx,
   createPool,
   expectTxFail,
+  interestSettled,
   fundLoanIx,
   HOUSE_PARAMS,
   loanMath,
@@ -54,6 +62,35 @@ async function crank(c: Ctx, signer = c.env.wallets.stranger) {
 async function crankFails(c: Ctx, expected: string) {
   const s = c.env.wallets.stranger;
   expectTxFail(c.env, [await crankLoanIx(c.env, c.pool, c.loan, s.publicKey)], [s], expected);
+  assertInvariants(c.env, c.pool, [c.loan]);
+}
+
+/** Kredi + havuz + teminat durumunun karşılaştırılabilir özeti (başarısız crank hiçbirini değiştirmemeli). */
+function snapshot(c: Ctx) {
+  const l = readLoan(c.env, c.loan);
+  const p = readPool(c.env, c.pool.pool);
+  const { collateral } = loanPdas(c.env.programId, c.pool.pool, l.id);
+  return {
+    status: l.status,
+    missed: l.missedInstallments,
+    lastProcessed: l.lastProcessedPeriod,
+    provision: l.provisionAmount,
+    lateFee: l.lateFeeAccrued,
+    remaining: l.remainingPrincipal,
+    poolProvision: p.lossProvision,
+    poolLate: p.lateDefaultPrincipal,
+    poolOutstanding: p.totalOutstanding,
+    poolIdle: p.idleCash,
+    poolReserve: p.reserveBalance,
+    collateral: tokenBalance(c.env, collateral),
+  };
+}
+
+/** İşlemin loglarından `LoanCranked` event'lerini çözer. */
+function crankedEvents(c: Ctx, logs: string[]) {
+  const program = c.env.program!;
+  const parser = new EventParser(c.env.programId, program.coder);
+  return [...parser.parseLogs(logs)].filter((e) => e.name.toLowerCase() === "loancranked");
 }
 
 describe("crank_loan", () => {
@@ -62,6 +99,99 @@ describe("crank_loan", () => {
     await crankFails(c, "PeriodAlreadyProcessed");
     warp(c.env, 60 + 9); // next_due = şimdi + 60, grace 10 → 1 sn kala
     await crankFails(c, "PeriodAlreadyProcessed");
+  });
+
+  it("aynı dönem iki kez çağrılınca durum, karşılık ve bakiyeler değişmez (idempotent)", async () => {
+    const c = activeHouseLoan();
+    // Late1, Late2, Defaulted: her adımda önce işle, sonra aynı dönemde tekrar dene.
+    const steps: [number, LoanStatus, string][] = [
+      [60 + 10, LoanStatus.Late1, "PeriodAlreadyProcessed"],
+      [60, LoanStatus.Late2, "PeriodAlreadyProcessed"],
+      [60, LoanStatus.Defaulted, "LoanNotServiceable"], // Defaulted'dan sonrası record_recovery'nin işi
+    ];
+    for (const [wait, status, error] of steps) {
+      warp(c.env, wait);
+      await crank(c);
+      const after = snapshot(c);
+      expect(after.status).to.equal(status);
+      await crankFails(c, error);
+      await crankFails(c, error); // üçüncü deneme de aynı
+      expect(snapshot(c)).to.deep.equal(after);
+    }
+  });
+
+  it("dönem içinde (60 sn dolmadan) tekrar çağrı: PeriodAlreadyProcessed, hiçbir şey değişmez", async () => {
+    const c = activeHouseLoan();
+    warp(c.env, 60 + 10);
+    await crank(c); // Late1
+    const after = snapshot(c);
+    warp(c.env, 59); // sonraki adıma 1 sn var
+    await crankFails(c, "PeriodAlreadyProcessed");
+    expect(snapshot(c)).to.deep.equal(after);
+  });
+
+  it("yabancı (hiçbir rolü olmayan) cüzdan, borçlu ve satıcı da crank'leyebilir", async () => {
+    for (const who of ["stranger", "borrower1", "seller"] as const) {
+      const c = activeHouseLoan();
+      warp(c.env, 60 + 10);
+      await crank(c, c.env.wallets[who]);
+      expect(readLoan(c.env, c.loan).status).to.equal(LoanStatus.Late1);
+    }
+  });
+
+  it("karşılık farkı: pool.loss_provision yalnızca yeni − eski kadar değişir (iki kredi)", async () => {
+    const c = activeHouseLoan();
+    const second = writeLoanFixture(c.env, c.pool, { status: LoanStatus.Active }).loan;
+    const c2: Ctx = { ...c, loan: second };
+    const p0 = readPool(c.env, c.pool.pool).lossProvision;
+    expect(p0).to.equal(0n);
+
+    warp(c.env, 60 + 10);
+    await crank(c); // 1. kredi Late1: %5
+    const prov1 = readLoan(c.env, c.loan).provisionAmount;
+    expect(readPool(c.env, c.pool.pool).lossProvision).to.equal(prov1);
+
+    await crank(c2); // 2. kredi Late1: toplam iki karşılık
+    const provB = readLoan(c.env, second).provisionAmount;
+    expect(readPool(c.env, c.pool.pool).lossProvision).to.equal(prov1 + provB);
+
+    warp(c.env, 60);
+    await crank(c); // 1. kredi Late2: toplamda yalnızca 1. kredinin farkı değişir
+    const prov1b = readLoan(c.env, c.loan).provisionAmount;
+    expect(prov1b > prov1).to.equal(true);
+    expect(readPool(c.env, c.pool.pool).lossProvision).to.equal(prov1b + provB);
+    assertInvariants(c.env, c.pool, [c.loan, second]);
+  });
+
+  it("LoanCranked event'i: eski/yeni durum, kaçırılan taksit ve karşılık farkı", async () => {
+    const c = activeHouseLoan();
+    const s = c.env.wallets.stranger;
+    const run = async () =>
+      sendTx(c.env, [await crankLoanIx(c.env, c.pool, c.loan, s.publicKey)], [s]).logs();
+
+    warp(c.env, 60 + 10);
+    let before = readPool(c.env, c.pool.pool).lossProvision;
+    let ev = crankedEvents(c, await run());
+    expect(ev).to.have.length(1);
+    let d = ev[0].data as any;
+    expect(d.oldStatus).to.equal(LoanStatus.Active);
+    expect(d.newStatus).to.equal(LoanStatus.Late1);
+    expect(d.missedInstallments).to.equal(1);
+    expect(BigInt(d.provisionDelta.toString())).to.equal(readPool(c.env, c.pool.pool).lossProvision - before);
+    expect(d.loanId.toString()).to.equal(readLoan(c.env, c.loan).id.toString());
+    expect(d.pool.toBase58()).to.equal(c.pool.pool.toBase58());
+
+    warp(c.env, 60);
+    before = readPool(c.env, c.pool.pool).lossProvision;
+    ev = crankedEvents(c, await run());
+    d = ev[0].data as any;
+    expect(d.oldStatus).to.equal(LoanStatus.Late1);
+    expect(d.newStatus).to.equal(LoanStatus.Late2);
+    expect(d.missedInstallments).to.equal(2);
+    // Fark yeni − eski; toplam karşılık değil.
+    expect(BigInt(d.provisionDelta.toString())).to.equal(readPool(c.env, c.pool.pool).lossProvision - before);
+    expect(BigInt(d.collateralUsed.toString()) > 0n).to.equal(true);
+    assertInvariants(c.env, c.pool, [c.loan]);
   });
 
   it("Active → Late1 → Late2 → Defaulted: tutarlar loanMath ile birebir", async () => {
@@ -123,7 +253,9 @@ describe("crank_loan", () => {
     await crank(c);
     l = readLoan(env, c.loan);
     p = readPool(env, pool.pool);
-    const accrued = loanMath.interestForPeriod(remaining2, l0.rateBps) * 3n;
+    // Birikmiş faiz: 3 dönem − Late2'de teminattan ödenen faiz (iki kez sayılmaz).
+    expect(interestSettled(l)).to.equal(split.interest);
+    const accrued = loanMath.interestForPeriod(remaining2, l0.rateBps) * 3n - split.interest;
     const value = l0.price < l0.appraisedValue ? l0.price : l0.appraisedValue;
     const expectedLoss = remaining2 + accrued - 2n * inst - floorBps(value, 6300);
     const target = max(ceilBps(remaining2, 1500), expectedLoss > 0n ? expectedLoss : 0n);
@@ -174,7 +306,10 @@ describe("crank_loan", () => {
     const c = { env, pool, loan };
     await crank(c);
     const l = readLoan(env, loan);
-    const accrued = loanMath.interestForPeriod(l.remainingPrincipal, 900) * 3n;
+    // Tek crank'te 1→2→3: Late2 adımında kesilen taksidin faizi birikmiş faizden düşer.
+    const split = loanMath.splitPayment(l0.installment, l0.remainingPrincipal, 900, ceilBps(l0.installment, 200));
+    expect(interestSettled(l)).to.equal(split.interest);
+    const accrued = loanMath.interestForPeriod(l.remainingPrincipal, 900) * 3n - split.interest;
     const expectedLoss = l.remainingPrincipal + accrued - 2n * l0.installment - floorBps(20_000n * USDC, 5400);
     expect(l.provisionAmount).to.equal(max(ceilBps(l.remainingPrincipal, 1500), expectedLoss));
   });

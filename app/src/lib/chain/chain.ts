@@ -33,7 +33,12 @@ const REGIONS: Record<number, string> = { 1: "Panama City", 2: "Guayaquil" };
 const regionCode = (city: string) => Number(Object.entries(REGIONS).find(([, v]) => v === city)?.[0] ?? 0);
 
 const LIVE = ["Active", "Late1", "Late2"];
-const SNAPSHOT_TTL_MS = 2000;
+/**
+ * One snapshot (3 getProgramAccounts + collateral balances) serves every screen for this long.
+ * Public devnet RPC answers 429 when pages poll faster; writes clear the cache right away.
+ */
+const SNAPSHOT_TTL_MS = 10_000;
+const BALANCE_TTL_MS = 10_000;
 /** process_withdrawals pays at most this many requests per transaction. */
 const MAX_WITHDRAWALS_PER_TX = 3;
 const ERR_PERIOD_ALREADY_PROCESSED = 6016;
@@ -64,6 +69,8 @@ export class ChainClient implements GlassHouseClient {
   private seller: Keypair;
   private listeners = new Set<() => void>();
   private cache: { at: number; p: Promise<Snapshot> } | null = null;
+  private balances = new Map<string, { at: number; p: Promise<number> }>();
+  private poolPks: Map<PoolId, PublicKey> | null = null;
   private pda: ReturnType<typeof pdas>;
 
   constructor(
@@ -97,6 +104,7 @@ export class ChainClient implements GlassHouseClient {
 
   private changed() {
     this.cache = null;
+    this.balances.clear();
     for (const l of this.listeners) l();
   }
 
@@ -614,31 +622,63 @@ export class ChainClient implements GlassHouseClient {
     return p;
   }
 
-  private async load(): Promise<Snapshot> {
-    const [poolAccs, loanAccs, reqAccs] = await Promise.all([
-      this.program.account.pool.all(),
-      this.program.account.loan.all(),
-      this.program.account.withdrawRequest.all(),
-    ]);
-
-    // One pool per asset type: an env override, else the lowest pool_id (the 2008-mode pool
-    // is a later id of the same type).
-    const pools = new Map<PoolId, { pk: PublicKey; raw: RawPool; state: PoolState }>();
-    const byPk = new Map<string, PoolId>();
-    for (const id of ["house", "vehicle"] as PoolId[]) {
-      const override = id === "house" ? process.env.NEXT_PUBLIC_HOUSE_POOL : process.env.NEXT_PUBLIC_VEHICLE_POOL;
-      const candidates = poolAccs
-        .filter((a) => (override ? a.publicKey.toBase58() === override : assetTypeOf(a.account) === id))
-        .sort((a, b) => a.account.poolId.cmp(b.account.poolId));
-      const pick = candidates[0];
-      if (!pick) continue;
-      byPk.set(pick.publicKey.toBase58(), id);
-      pools.set(id, { pk: pick.publicKey, raw: pick.account, state: null as unknown as PoolState });
+  /**
+   * Pool addresses: from env when set, else found once with getProgramAccounts and kept.
+   * One pool per asset type; without env, the lowest pool_id (the 2008-mode pool is a later id).
+   */
+  private async poolAddresses(): Promise<Map<PoolId, PublicKey>> {
+    if (this.poolPks) return this.poolPks;
+    const found = new Map<PoolId, PublicKey>();
+    const env = { house: process.env.NEXT_PUBLIC_HOUSE_POOL, vehicle: process.env.NEXT_PUBLIC_VEHICLE_POOL };
+    if (env.house && env.vehicle) {
+      found.set("house", new PublicKey(env.house));
+      found.set("vehicle", new PublicKey(env.vehicle));
+    } else {
+      const all = await this.program.account.pool.all();
+      for (const id of ["house", "vehicle"] as PoolId[]) {
+        const pick = env[id]
+          ? all.find((a) => a.publicKey.toBase58() === env[id])
+          : all.filter((a) => assetTypeOf(a.account) === id).sort((a, b) => a.account.poolId.cmp(b.account.poolId))[0];
+        if (pick) found.set(id, pick.publicKey);
+      }
     }
+    this.poolPks = found;
+    return found;
+  }
 
-    const ours = loanAccs.filter((a) => byPk.has(a.account.pool.toBase58()));
+  /**
+   * Reads by address only (getMultipleAccounts): loans are PDAs of (pool, 0..next_loan_id) and
+   * withdraw requests of (pool, head..tail). Public RPCs throttle getProgramAccounts hard.
+   */
+  private async load(): Promise<Snapshot> {
+    const addrs = await this.poolAddresses();
+    const ids = [...addrs.keys()];
+    const rawPools = await this.program.account.pool.fetchMultiple(ids.map((id) => addrs.get(id)!));
+
+    const pools = new Map<PoolId, { pk: PublicKey; raw: RawPool; state: PoolState }>();
+    ids.forEach((id, i) => {
+      const raw = rawPools[i];
+      if (raw) pools.set(id, { pk: addrs.get(id)!, raw, state: null as unknown as PoolState });
+    });
+
+    const loanPks: { poolId: PoolId; pk: PublicKey }[] = [];
+    const reqPks: { poolId: PoolId; pk: PublicKey }[] = [];
+    for (const [poolId, p] of pools) {
+      const next = BigInt(p.raw.nextLoanId.toString());
+      for (let i = 0n; i < next; i++) loanPks.push({ poolId, pk: this.pda.loan(p.pk, i) });
+      const tail = BigInt(p.raw.withdrawTail.toString());
+      for (let s = BigInt(p.raw.withdrawHead.toString()); s < tail; s++) reqPks.push({ poolId, pk: this.pda.withdrawRequest(p.pk, s) });
+    }
+    const [rawLoans, rawReqs] = await Promise.all([
+      fetchChunked((pks) => this.program.account.loan.fetchMultiple(pks), loanPks.map((x) => x.pk)),
+      fetchChunked((pks) => this.program.account.withdrawRequest.fetchMultiple(pks), reqPks.map((x) => x.pk)),
+    ]);
+    const ours = loanPks.flatMap((x, i) => (rawLoans[i] ? [{ publicKey: x.pk, account: rawLoans[i]! }] : []));
+    const reqAccs = reqPks.flatMap((x, i) => (rawReqs[i] ? [{ account: rawReqs[i]! }] : []));
+    const byPk = new Map([...pools].map(([id, p]) => [p.pk.toBase58(), id] as const));
+
     const collateralPks = ours.map((a) => this.pda.collateral(a.publicKey));
-    const collateralInfos = collateralPks.length ? await this.connection.getMultipleAccountsInfo(collateralPks) : [];
+    const collateralInfos = await fetchChunked((pks) => this.connection.getMultipleAccountsInfo(pks), collateralPks);
 
     const loans: Loan[] = [];
     const loanRefs = new Map<string, { pk: PublicKey; raw: RawLoan; poolPk: PublicKey }>();
@@ -692,9 +732,15 @@ export class ChainClient implements GlassHouseClient {
     return first?.raw.usdcMint ?? null;
   }
 
+  /** Token balances, shared by every component that asks within BALANCE_TTL_MS. */
   private async tokenBalance(ata: PublicKey) {
-    const info = await this.connection.getAccountInfo(ata);
-    return info ? fromMicro(unpackAccount(ata, info).amount) : 0;
+    const key = ata.toBase58();
+    const hit = this.balances.get(key);
+    if (hit && Date.now() - hit.at < BALANCE_TTL_MS) return hit.p;
+    const p = this.connection.getAccountInfo(ata).then((info) => (info ? fromMicro(unpackAccount(ata, info).amount) : 0));
+    this.balances.set(key, { at: Date.now(), p });
+    p.catch(() => this.balances.delete(key));
+    return p;
   }
 }
 
@@ -846,6 +892,13 @@ function decodeCosign(payload: string): VersionedTransaction {
 }
 
 // ---------------------------------------------------------------- small helpers
+
+/** getMultipleAccounts takes at most 100 keys per call. */
+async function fetchChunked<T>(fetch: (pks: PublicKey[]) => Promise<T[]>, pks: PublicKey[]): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < pks.length; i += 100) out.push(...(await fetch(pks.slice(i, i + 100))));
+  return out;
+}
 
 function bn(v: bigint) {
   return new BN(v.toString());
