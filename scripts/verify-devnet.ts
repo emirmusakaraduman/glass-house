@@ -57,6 +57,27 @@ const u64le = (v: number): Buffer => {
 
 // ───────────────────────────── Ana akış ─────────────────────────────
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Yazma sonrası bayat okuma koruması (scripts/seed.ts'teki ile aynı sorun): özel RPC geride kalmış bir düğümden eski
+ * durum döndürebilir. `read` beklenen duruma (`done`) gelene kadar ~1 sn aralıkla en fazla `tries` kez denenir.
+ * Süre dolarsa FIRLATMAZ, son değeri döndürür: gerçek bir hata ✗ olarak ilgili check()'te görünür.
+ */
+async function settle<T>(read: () => Promise<T>, done: (v: T) => boolean, tries = 20): Promise<T> {
+  let last!: T;
+  for (let i = 0; i < tries; i++) {
+    try {
+      last = await read();
+      if (done(last)) return last;
+    } catch (e: any) {
+      if (!/does not exist|could not find|Account not found|fetch failed|timeout|429|ECONN/i.test(String(e?.message ?? e))) throw e;
+    }
+    await sleep(1000);
+  }
+  return last;
+}
+
 async function main() {
   if (!fs.existsSync(SEED_FILE)) throw new Error(`${SEED_FILE} yok. Önce scripts/seed.ts --execute çalıştırın.`);
   const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf-8"));
@@ -331,13 +352,20 @@ async function main() {
       })
       .signers([borrower])
       .rpc();
-    const d1 = await program.account.loan.fetch(l.addr);
-    const after = {
-      vault: await tokenBal(new PublicKey(P.vault)),
-      reserve: await tokenBal(new PublicKey(P.reserve)),
-      treasury: await tokenBal(new PublicKey(P.platformTreasury)),
-      idle: big((await program.account.pool.fetch(P.addr)).idleCash),
-    };
+    // Taksit ödemesi kalan anaparayı, ödenen taksit sayısını ve idle_cash'i değiştirir: üçü de güncellenene kadar bekle.
+    const d1: any = await settle(
+      () => program.account.loan.fetch(l.addr),
+      (d: any) => Number(d.paidInstallments) > Number(d0.paidInstallments) && big(d.remainingPrincipal) !== remaining0,
+    );
+    const after = await settle(
+      async () => ({
+        vault: await tokenBal(new PublicKey(P.vault)),
+        reserve: await tokenBal(new PublicKey(P.reserve)),
+        treasury: await tokenBal(new PublicKey(P.platformTreasury)),
+        idle: big((await program.account.pool.fetch(P.addr)).idleCash),
+      }),
+      (a) => a.vault !== before.vault && a.idle !== before.idle && a.treasury !== before.treasury && a.reserve !== before.reserve,
+    );
     // Faiz = kalan × oran / 12, yukarı yuvarlanır (±1 micro-USDC); platform ve yedek payı faiz × 50 / oran (aşağı).
     const interest = (remaining0 * BigInt(rate) + 119_999n) / 120_000n;
     const share = (interest * 50n) / BigInt(rate);
@@ -381,11 +409,19 @@ async function main() {
       })
       .signers([inv])
       .rpc();
-    const minted = (await getAccount(conn, sharesAta)).amount - held0;
+    const minted =
+      (await settle(
+        async () => (await getAccount(conn, sharesAta)).amount,
+        (a) => a > held0,
+      )) - held0;
     check(minted === expectedShares, `deposit ${usd(amount)} USDC → ${usd(minted)} pay (NAV formülüyle birebir)`, `deposit: basılan pay ${minted}, beklenen ${expectedShares}`);
 
     // Çekim talebi → işlem
-    const st1 = await program.account.pool.fetch(P.addr);
+    // Deposit toplam payı artırmış olmalı; bayat okuma yanlış sıra numarası/NAV verebilir.
+    const st1: any = await settle(
+      () => program.account.pool.fetch(P.addr),
+      (s: any) => big(s.totalShares) >= big(st0.totalShares) + minted,
+    );
     const seq = big(st1.withdrawTail);
     const [wreq] = PublicKey.findProgramAddressSync([Buffer.from("wreq"), P.addr.toBuffer(), u64le(Number(seq))], programId);
     const [shareEscrow] = PublicKey.findProgramAddressSync([Buffer.from("share_escrow"), P.addr.toBuffer()], programId);
@@ -404,7 +440,10 @@ async function main() {
       })
       .signers([inv])
       .rpc();
-    const st2 = await program.account.pool.fetch(P.addr);
+    const st2: any = await settle(
+      () => program.account.pool.fetch(P.addr),
+      (s: any) => big(s.withdrawTail) === seq + 1n,
+    );
     const nav2 = navOf(st2);
     const grossOut = (minted * (nav2 + 1_000_000n)) / (big(st2.totalShares) + 1_000_000n);
     const feeOut = (grossOut * BigInt(st2.entryExitFeeBps) + 9_999n) / 10_000n;
@@ -427,11 +466,18 @@ async function main() {
       ])
       .signers([stranger])
       .rpc();
-    const paid = (await tokenBal(invUsdc)) - balBefore;
+    const paid = (await settle(() => tokenBal(invUsdc), (b) => b > balBefore)) - balBefore;
     check(paid === netOut, `çekim: ${usd(minted)} pay → ${usd(paid)} USDC (işlem anındaki NAV, giriş+çıkış ücreti ≈ ${usd(fee + feeOut)})`, `çekim: ödenen ${paid}, beklenen ${netOut}`);
-    const st3 = await program.account.pool.fetch(P.addr);
+    const st3: any = await settle(
+      () => program.account.pool.fetch(P.addr),
+      (s: any) => big(s.withdrawHead) === seq + 1n,
+    );
     check(big(st3.withdrawHead) === seq + 1n, "kuyruk başı ilerledi, talep kapandı", "withdraw_head ilerlemedi");
-    check((await conn.getAccountInfo(wreq)) === null, "talep hesabı kapandı", "talep hesabı hâlâ açık");
+    const wreqInfo = await settle(
+      () => conn.getAccountInfo(wreq),
+      (a) => a === null,
+    );
+    check(wreqInfo === null, "talep hesabı kapandı", "talep hesabı hâlâ açık");
   }
 
   // ---------- özet ----------
