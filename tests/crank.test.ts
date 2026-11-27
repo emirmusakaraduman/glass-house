@@ -13,6 +13,7 @@ import {
   crankLoanIx,
   createPool,
   expectTxFail,
+  interestSettled,
   fundLoanIx,
   HOUSE_PARAMS,
   loanMath,
@@ -252,7 +253,9 @@ describe("crank_loan", () => {
     await crank(c);
     l = readLoan(env, c.loan);
     p = readPool(env, pool.pool);
-    const accrued = loanMath.interestForPeriod(remaining2, l0.rateBps) * 3n;
+    // Birikmiş faiz: 3 dönem − Late2'de teminattan ödenen faiz (iki kez sayılmaz).
+    expect(interestSettled(l)).to.equal(split.interest);
+    const accrued = loanMath.interestForPeriod(remaining2, l0.rateBps) * 3n - split.interest;
     const value = l0.price < l0.appraisedValue ? l0.price : l0.appraisedValue;
     const expectedLoss = remaining2 + accrued - 2n * inst - floorBps(value, 6300);
     const target = max(ceilBps(remaining2, 1500), expectedLoss > 0n ? expectedLoss : 0n);
@@ -303,7 +306,10 @@ describe("crank_loan", () => {
     const c = { env, pool, loan };
     await crank(c);
     const l = readLoan(env, loan);
-    const accrued = loanMath.interestForPeriod(l.remainingPrincipal, 900) * 3n;
+    // Tek crank'te 1→2→3: Late2 adımında kesilen taksidin faizi birikmiş faizden düşer.
+    const split = loanMath.splitPayment(l0.installment, l0.remainingPrincipal, 900, ceilBps(l0.installment, 200));
+    expect(interestSettled(l)).to.equal(split.interest);
+    const accrued = loanMath.interestForPeriod(l.remainingPrincipal, 900) * 3n - split.interest;
     const expectedLoss = l.remainingPrincipal + accrued - 2n * l0.installment - floorBps(20_000n * USDC, 5400);
     expect(l.provisionAmount).to.equal(max(ceilBps(l.remainingPrincipal, 1500), expectedLoss));
   });

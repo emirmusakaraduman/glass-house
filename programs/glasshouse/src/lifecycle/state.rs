@@ -17,11 +17,28 @@ pub mod seeds {
 /// | Bayt   | Alan                 | Tip    | Anlam                                              |
 /// |--------|----------------------|--------|----------------------------------------------------|
 /// | 0..8   | collateral_deducted  | u64 LE | crank'in teminattan kestiği toplam (Late2 adımı)   |
-/// | 8..64  | —                    | 0      | boş                                                |
+/// | 8..16  | interest_settled     | u64 LE | bu gecikme döngüsünde teminattan ödenen FAİZ       |
+/// | 16..64 | —                    | 0      | boş                                                |
+///
+/// `interest_settled`: Late2 adımında kesilen taksidin faiz kısmı. Temerrütte birikmiş faizden düşülür
+/// (aynı ayın faizi hem teminattan ödenip hem alacağa eklenmesin). Gecikmeden çıkışta (repay) ve
+/// kapanışta sıfırlanır.
 pub mod loan_ext {
     use crate::state::Loan;
 
     const COLLATERAL_DEDUCTED: core::ops::Range<usize> = 0..8;
+    const INTEREST_SETTLED: core::ops::Range<usize> = 8..16;
+
+    /// Bu gecikme döngüsünde teminattan ödenen faiz (micro-USDC).
+    pub fn interest_settled(loan: &Loan) -> u64 {
+        let mut b = [0u8; 8];
+        b.copy_from_slice(&loan.reserved[INTEREST_SETTLED]);
+        u64::from_le_bytes(b)
+    }
+
+    pub fn set_interest_settled(loan: &mut Loan, value: u64) {
+        loan.reserved[INTEREST_SETTLED].copy_from_slice(&value.to_le_bytes());
+    }
 
     /// CollateralEscrow'dan şimdiye kadar kesilen tutar.
     pub fn collateral_deducted(loan: &Loan) -> u64 {

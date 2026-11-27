@@ -55,6 +55,14 @@ pub fn late_fee(installment: u64) -> Result<u64> {
     u64::try_from(v).map_err(|_| GlassError::MathOverflow.into())
 }
 
+/// Temerrüt alacağındaki ÖDENMEMİŞ birikmiş faiz: dönem faizi × dönem sayısı − bu gecikme döngüsünde
+/// teminattan zaten ödenen faiz (negatifse 0). Late2'de kesilen taksidin faizi bir kez ödenmiştir;
+/// alacağa ikinci kez eklenmez.
+pub fn unpaid_accrued_interest(per_period: u64, periods: u64, settled: u64) -> Result<u64> {
+    let total = per_period.checked_mul(periods).ok_or(GlassError::MathOverflow)?;
+    Ok(total.saturating_sub(settled))
+}
+
 /// Crank'in uygulayabileceği durumlar (Active / Late1 / Late2). Defaulted dahil değil: sonrası record_recovery.
 pub fn is_crankable(status: LoanStatus) -> bool {
     matches!(status, LoanStatus::Active | LoanStatus::Late1 | LoanStatus::Late2)
@@ -109,6 +117,17 @@ mod tests {
         // 3'ten sonrası yok.
         assert_eq!(pending_steps(3, 7).count(), 0);
         assert_eq!(pending_steps(1, 9).collect::<Vec<_>>(), vec![2, 3]);
+    }
+
+    #[test]
+    fn odenmemis_faiz_teminattan_odenen_kismi_dusurur() {
+        // Maria: 15 ay × 407,61 − teminattan ödenen 408,33 (bir ayın faizi)
+        let per = 407_610_000u64;
+        assert_eq!(unpaid_accrued_interest(per, 15, 0).unwrap(), 15 * per);
+        assert_eq!(unpaid_accrued_interest(per, 15, 408_330_000).unwrap(), 15 * per - 408_330_000);
+        // Ödenen faiz birikenden büyükse 0 (negatif olmaz).
+        assert_eq!(unpaid_accrued_interest(per, 0, 408_330_000).unwrap(), 0);
+        assert!(unpaid_accrued_interest(u64::MAX, 2, 0).is_err());
     }
 
     #[test]
