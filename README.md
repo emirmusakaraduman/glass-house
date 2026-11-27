@@ -208,6 +208,11 @@ See [docs/DEPLOY.md](docs/DEPLOY.md). Scripts default to a dry run and only writ
   [docs/LEGAL.md](docs/LEGAL.md)). Each country needs local counsel.
 - **No KYC on deposits.** The allowlist hook exists but is disabled.
 - **No underwriter stake** (stretch goal, not built); that rung of the loss order does not exist.
+- **No `top_up_escrow`** (stretch goal, not built). If an appraisal comes in below the price, the
+  loan is rejected and the borrower re-applies with a larger down payment; it is never shrunk.
+- **No fuzz or property-based tests.** Correctness rests on fixed-case unit tests, LiteSVM and
+  local-validator integration tests, the invariant checks run after every instruction, and the
+  stress simulation. Randomised input testing of `math.rs` and `nav.rs` is future work.
 - **First-loss capital is assumed.** In the demo the platform supplies it. The pool's first-loss
   vault (350k for a 7M pool) costs more than the yearly platform income (about 56k); funding it
   in a real product is an open question.
@@ -249,13 +254,11 @@ and an independent audit.
 
 ## Team
 
-**[TODO: names, roles and links. The three roles below are from the project plan.]**
-
 | Role | Scope | Name |
 |---|---|---|
-| Backend A | money flow: pool, deposit, loan lifecycle, math, NAV, deploy | [TODO] |
-| Backend B | repayment, withdrawals, crank, recovery, risk logic, tests, stress simulation | [TODO] |
-| Frontend | app, listing finder, demo | [TODO] |
+| Backend A | money flow: pool, deposit, loan lifecycle, math, NAV, deploy | [beratvarlik](https://github.com/beratvarlik) |
+| Backend B | repayment, withdrawals, crank, recovery, risk logic, tests, stress simulation | Emir Musa Karaduman ([emirmusakaraduman](https://github.com/emirmusakaraduman)) |
+| Frontend | app, listing finder, demo | Mustafa Baha Faik ([mustafabahafaik](https://github.com/mustafabahafaik)) |
 
 ## License
 
