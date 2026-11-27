@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { shortAddr } from "@/lib/format";
 import { cx } from "../ui";
-import { LogoLink } from "./Logo";
+import { Logo } from "../brand/Logo";
 import { APP_NAV, isNavActive, pageMeta } from "./routes";
 import { DataSourceBadge, ResetDemoButton, WalletButton, WalletCard, WalletStrip } from "./WalletBits";
 
@@ -15,7 +15,7 @@ export function AppSidebar() {
   return (
     <aside className="sticky top-0 hidden h-screen p-3 pr-0 lg:block">
       <div className="pane flex h-full flex-col rounded-[24px] p-4">
-        <LogoLink className="px-2 pb-6 pt-2" />
+        <Logo href="/" className="px-2 pb-6 pt-2" />
         <nav aria-label="App" className="flex-1">
           <ul className="space-y-1">
             {APP_NAV.map((item) => {
@@ -57,7 +57,7 @@ export function AppTopBar() {
   return (
     <header className="border-b border-white/[0.08] bg-frost/70 backdrop-blur-xl lg:sticky lg:top-0 lg:z-20">
       <div className="mx-auto flex w-full max-w-[1200px] 2xl:max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3 sm:px-8 lg:flex-nowrap lg:py-4">
-        <LogoLink withName={false} className="lg:hidden" />
+        <Logo href="/" markOnly className="lg:hidden" />
         <div className="order-last min-w-0 basis-full lg:order-none lg:flex-1 lg:basis-auto">
           <h1 className="title text-gradient text-[22px] leading-tight sm:text-2xl">{title}</h1>
           {address && meta.connectedTitle ? (
