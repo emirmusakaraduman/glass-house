@@ -1,17 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
 import type { LoanStatus } from "../types";
 
-// Chain-backed client. Wire this up when the program teammate shares the IDL:
-//   1. Copy target/idl/glasshouse.json to public/idl/glasshouse.json (fetched at runtime,
-//      so the frontend builds even before the IDL exists).
-//   2. Set NEXT_PUBLIC_PROGRAM_ID, NEXT_PUBLIC_USDC_MINT and NEXT_PUBLIC_DATA_SOURCE=chain.
-//   3. Implement GlassHouseClient below with @coral-xyz/anchor's Program:
-//        const idl = await fetch("/idl/glasshouse.json").then((r) => r.json());
-//        const program = new Program(idl, new AnchorProvider(connection, wallet, {}));
-//        const pools = await program.account.pool.all();
-//      Map accounts with fromMicro() and mapStatus() so the screens keep using the same types.
-//
-// Until then the app runs on the mock client (src/lib/chain/mock.ts).
+// Shared helpers for the chain client (src/lib/chain/chain.ts): unit conversion, status
+// mapping and PDA seeds. The IDL is synced from deployments/idl with `npm run idl:sync`.
 
 export const USDC_DECIMALS = 6;
 
@@ -69,6 +60,7 @@ export function pdas(programId: PublicKey) {
     loanEscrow: (loan: PublicKey) => find([Buffer.from("escrow"), loan.toBuffer()]),
     collateral: (loan: PublicKey) => find([Buffer.from("collateral"), loan.toBuffer()]),
     withdrawRequest: (pool: PublicKey, seq: number | bigint) => find([Buffer.from("wreq"), pool.toBuffer(), u64(seq)]),
+    shareEscrow: (pool: PublicKey) => find([Buffer.from("share_escrow"), pool.toBuffer()]),
   };
 }
 

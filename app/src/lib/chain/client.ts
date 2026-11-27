@@ -27,6 +27,8 @@ export interface GlassHouseClient {
   readonly mode: "mock" | "chain";
   /** Wallet used for writes (connected wallet, or a demo wallet in mock mode). */
   readonly actor: string;
+  /** A seller wallet this browser can co-sign apply_loan with (chain mode demos). */
+  readonly demoSeller?: string;
 
   getPools(): Promise<PoolState[]>;
   getPool(id: PoolId): Promise<PoolState | null>;

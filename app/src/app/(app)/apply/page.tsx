@@ -273,8 +273,8 @@ export default function ApplyPage() {
                     {sellerError ? <ErrorText>{sellerError}</ErrorText> : null}
                     {sameWallet ? <ErrorText>The seller can&apos;t use the borrower&apos;s wallet.</ErrorText> : null}
                   </div>
-                  {DATA_SOURCE === "mock" && !seller ? (
-                    <button onClick={() => setSeller(DEMO_SELLER)} className="mt-2 text-sm font-semibold text-steel underline underline-offset-2">
+                  {!seller ? (
+                    <button onClick={() => setSeller(client.demoSeller ?? DEMO_SELLER)} className="mt-2 text-sm font-semibold text-steel underline underline-offset-2">
                       Use the demo seller wallet
                     </button>
                   ) : null}

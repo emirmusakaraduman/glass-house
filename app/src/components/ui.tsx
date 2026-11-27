@@ -411,7 +411,8 @@ export function TxNote({ signature, mock, message }: { signature: string; mock: 
   return (
     <div className="text-sm text-muted">
       {message ? <span className="text-ink">{message} </span> : null}
-      {mock ? (
+      {/* No signature: nothing was sent (e.g. crank with no period to process). */}
+      {!signature ? null : mock ? (
         <span>Mock transaction, no Explorer page.</span>
       ) : (
         <a

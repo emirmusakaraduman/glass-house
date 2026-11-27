@@ -1,12 +1,13 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet, useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { DATA_SOURCE, MockClient, type GlassHouseClient } from "@/lib/chain";
+import { ChainClient } from "@/lib/chain/chain";
 import { useToast, type ToastTone } from "./ToastProvider";
 
-// Holds the single GlassHouseClient for the app. Mock today; the chain client plugs in here
-// once the IDL exists (see src/lib/chain/anchor.ts).
+// Holds the single GlassHouseClient for the app: the in-memory mock, or the deployed program
+// when NEXT_PUBLIC_DATA_SOURCE=chain.
 
 interface Ctx {
   client: GlassHouseClient;
@@ -19,21 +20,24 @@ const ClientContext = createContext<Ctx | null>(null);
 
 export function ClientProvider({ children }: { children: React.ReactNode }) {
   const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const anchorWallet = useAnchorWallet();
   const mockRef = useRef<MockClient | null>(null);
-  if (!mockRef.current) mockRef.current = new MockClient();
-  const client = mockRef.current;
+  if (DATA_SOURCE === "mock" && !mockRef.current) mockRef.current = new MockClient();
+  const mock = mockRef.current;
+
+  // The chain client is rebuilt when the wallet changes, since it signs with that wallet.
+  const client = useMemo<GlassHouseClient>(
+    () => (DATA_SOURCE === "chain" ? new ChainClient(connection, anchorWallet ?? null) : mock!),
+    [connection, anchorWallet, mock],
+  );
   const [version, setVersion] = useState(0);
 
   useEffect(() => client.subscribe(() => setVersion((v) => v + 1)), [client]);
-  useEffect(() => client.setActor(publicKey?.toBase58() ?? null), [client, publicKey]);
+  useEffect(() => mock?.setActor(publicKey?.toBase58() ?? null), [mock, publicKey]);
 
-  const resetDemo = useCallback(() => client.reset(), [client]);
-  const value = useMemo<Ctx>(() => ({ client, version, resetDemo: DATA_SOURCE === "mock" ? resetDemo : null }), [client, version, resetDemo]);
-
-  useEffect(() => {
-    // TODO(IDL): build the chain client here and drop the mock.
-    if (DATA_SOURCE === "chain") console.warn("NEXT_PUBLIC_DATA_SOURCE=chain is set but the chain client isn't wired yet; using mock data.");
-  }, []);
+  const resetDemo = useCallback(() => mock?.reset(), [mock]);
+  const value = useMemo<Ctx>(() => ({ client, version, resetDemo: mock ? resetDemo : null }), [client, version, resetDemo, mock]);
 
   return <ClientContext.Provider value={value}>{children}</ClientContext.Provider>;
 }
