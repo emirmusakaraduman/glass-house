@@ -1,3 +1,8 @@
+// request_withdraw / process_withdrawals testleri (LiteSVM, gerçek deposit ile).
+// Kuyruk FIFO'dur: baştaki talep ödenemiyorsa (nakit yok) işlem orada durur ve sonraki talepler de
+// bekler (InsufficientIdleCash); kısmi ödeme yapılmaz. Bozuk (kapatılmış ödeme hesaplı) talep atlanır.
+// Ödeme işlem anındaki senior NAV iledir; her adımda assertInvariants.
+
 import { expect } from "chai";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
@@ -220,5 +225,115 @@ describe("request_withdraw / process_withdrawals", () => {
     // Kuyruk işlenip boşalınca: WithdrawQueueEmpty.
     await processAll(c);
     expectTxFail(env, [await processWithdrawalsIx(env, pool, bogus)], [s], "WithdrawQueueEmpty");
+  });
+});
+
+describe("process_withdrawals: NAV, adalet ve likidite", () => {
+  /** Havuzun karşılığını kasa + yedeği `extra` kadar aşırır: senior NAV düşer. */
+  function dropNav(c: Ctx, extra: bigint) {
+    const p = readPool(c.env, c.pool.pool);
+    patchPool(c.env, c.pool.pool, { lossProvision: p.firstLossBalance + p.reserveBalance + extra });
+  }
+
+  it("NAV düşünce erken çıkan düşük fiyattan alır: zararı kalanlara bırakamaz", async () => {
+    const c = await setup();
+    const [a, b] = [c.env.wallets.investor1, c.env.wallets.investor2];
+    const shA = shares(c, a);
+    const shB = shares(c, b);
+    // Zarardan ÖNCEki fiyat (1 pay = kaç micro-USDC, brüt).
+    const preGrossPerShare = (quote(c, shA).gross * 1_000_000n) / shA;
+
+    await request(c, a, shA); // A önce sıraya girer ve çıkmak ister
+    await request(c, b, shB);
+    dropNav(c, 300n * USDC); // işlenmeden önce zarar gelir
+
+    const usdcA0 = usdc(c, a);
+    const usdcB0 = usdc(c, b);
+    const qA = quote(c, shA);
+    await processAll(c); // yalnızca A (talep başına tek işlem değil; kuyruk sırasıyla ikisi de)
+    // Hem A hem B aynı tx'te işlendi; A'nın aldığı, işlem anındaki NAV'dır.
+    expect(usdc(c, a) - usdcA0).to.equal(qA.net);
+    expect(usdc(c, b) > usdcB0).to.equal(true);
+
+    // A, zarar öncesi fiyatı ALAMADI: pay başına brüt fiyat düştü.
+    const aGrossPerShare = (qA.gross * 1_000_000n) / shA;
+    expect(aGrossPerShare < preGrossPerShare).to.equal(true);
+
+    // B, A'dan DAHA KÖTÜ fiyat almadı ama A'dan çok daha iyisini de almadı: zarar paylaşıldı.
+    // A'nın ödediği çıkış ücreti havuzda kaldığı için B'nin fiyatı A'dan YALNIZCA o ücretin B'nin
+    // paylarına düşen kısmı kadar yüksek olabilir (fiyat farkı = A.ücret / B.payı).
+    const bGrossPerShare = ((usdc(c, b) - usdcB0) * 1_000_000n * 10_000n) / (shB * (10_000n - 20n));
+    const feeBump = (qA.fee * 1_000_000n) / shB;
+    expect(bGrossPerShare + 2_000n >= aGrossPerShare).to.equal(true); // B daha kötü fiyat almadı
+    expect(bGrossPerShare <= aGrossPerShare + feeBump + 2_000n).to.equal(true); // fazlası yalnızca ücret
+    assertInvariants(c.env, c.pool);
+  });
+
+  it("kuyruk sırası korunur: erken talep önce, sonraki sonra ödenir (talep başına ayrı tx)", async () => {
+    const c = await setup();
+    const [a, b] = [c.env.wallets.investor1, c.env.wallets.investor2];
+    await request(c, a, 200n * USDC);
+    await request(c, b, 200n * USDC);
+    const entries = pendingWithdrawals(c.env, c.pool);
+    const s = c.env.wallets.stranger;
+
+    // B'nin talebi başa alınarak işlenemez: hesaplar kuyruk başıyla uyuşmalı.
+    expectTxFail(c.env, [await processWithdrawalsIx(c.env, c.pool, [entries[1]])], [s], "InvalidWithdrawRequest");
+    assertInvariants(c.env, c.pool);
+
+    const usdcA0 = usdc(c, a);
+    sendTx(c.env, [await processWithdrawalsIx(c.env, c.pool, [entries[0]])], [s]);
+    assertInvariants(c.env, c.pool);
+    expect(usdc(c, a) > usdcA0).to.equal(true);
+    expect(readPool(c.env, c.pool.pool).withdrawHead).to.equal(1n);
+    expect(usdc(c, b)).to.equal(0n); // B henüz ödenmedi
+
+    sendTx(c.env, [await processWithdrawalsIx(c.env, c.pool, [entries[1]])], [s]);
+    assertInvariants(c.env, c.pool);
+    expect(readPool(c.env, c.pool.pool).withdrawHead).to.equal(2n);
+    expect(usdc(c, b) > 0n).to.equal(true);
+  });
+
+  it("likidite yetersizse talep bekler (kısmi ödeme yok); nakit gelince FIFO işlenir", async () => {
+    const c = await setup();
+    const { env, pool } = c;
+    const [a, b] = [env.wallets.investor1, env.wallets.investor2];
+    const s = env.wallets.stranger;
+    const shA = shares(c, a);
+    await request(c, a, shA); // tüm payı (≈1.000 USDC)
+    await request(c, b, 100n * USDC); // küçük talep
+    const idle0 = readPool(env, pool.pool).idleCash;
+
+    // Nakdin çoğu krediye verilmiş gibi: idle 100 USDC.
+    patchPool(env, pool.pool, { idleCash: 100n * USDC, totalOutstanding: idle0 - 100n * USDC });
+    writeTokenAccount(env, pool.vault, env.usdcMint, pool.pool, 100n * USDC);
+    assertInvariants(env, pool);
+
+    const usdcA0 = usdc(c, a);
+    const escrow0 = tokenBalance(env, shareEscrowPda(env, pool));
+    expectTxFail(env, [await processWithdrawalsIx(env, pool)], [s], "InsufficientIdleCash");
+    assertInvariants(env, pool);
+    // Kısmi ödeme yok; talepler ve kilitli paylar yerinde.
+    expect(usdc(c, a)).to.equal(usdcA0);
+    expect(readPool(env, pool.pool).withdrawHead).to.equal(0n);
+    expect(tokenBalance(env, shareEscrowPda(env, pool))).to.equal(escrow0);
+    expect(pendingWithdrawals(env, pool, 10)).to.have.length(2);
+
+    // Likidite geri gelir: yeni yatırım. Sonra talepler SIRAYLA ödenir.
+    const newMoney = env.wallets.borrower1; // yeni yatırımcı gibi davranan başka bir cüzdan
+    fundUsdc(env, newMoney.publicKey, 5_000n * USDC);
+    sendTx(env, [await depositIx(env, pool, newMoney.publicKey, 5_000n * USDC)], [newMoney]);
+    assertInvariants(env, pool);
+
+    const qA = quote(c, shA);
+    sendTx(env, [await processWithdrawalsIx(env, pool, [pendingWithdrawals(env, pool)[0]])], [s]);
+    assertInvariants(env, pool);
+    expect(usdc(c, a) - usdcA0).to.equal(qA.net); // tam tutar, kısmi değil
+    const qB = quote(c, 100n * USDC);
+    const usdcB0 = usdc(c, b);
+    sendTx(env, [await processWithdrawalsIx(env, pool)], [s]);
+    assertInvariants(env, pool);
+    expect(usdc(c, b) - usdcB0).to.equal(qB.net);
+    expect(readPool(env, pool.pool).withdrawHead).to.equal(2n);
   });
 });
