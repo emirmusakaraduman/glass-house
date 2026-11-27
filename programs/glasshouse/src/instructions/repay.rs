@@ -24,6 +24,7 @@ use crate::errors::GlassError;
 use crate::lifecycle::events::LoanRepaid;
 use crate::lifecycle::provision::{apply_provision_change, target_provision, DefaultInputs};
 use crate::lifecycle::schedule::missed_installments;
+use crate::lifecycle::state::loan_ext;
 use crate::math;
 use crate::nav::assert_vault_covers_idle;
 use crate::state::{Loan, LoanStatus, Pool};
@@ -187,6 +188,7 @@ pub fn repay_handler(ctx: Context<Repay>, amount: u64) -> Result<()> {
     if cured || new_status == LoanStatus::PaidOff {
         loan.last_processed_period = 0;
         loan.missed_installments = 0;
+        loan_ext::set_interest_settled(loan, 0); // yeni gecikme döngüsü temiz başlar
     } else if is_late(new_status) {
         loan.missed_installments = u16::try_from(missed_after).unwrap_or(u16::MAX);
     }

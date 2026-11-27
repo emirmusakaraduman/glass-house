@@ -22,7 +22,7 @@ use crate::errors::GlassError;
 use crate::instructions::crank_loan::expected_collateral;
 use crate::lifecycle::events::RecoveryRecorded;
 use crate::lifecycle::provision::{apply_provision_change, bps_floor};
-use crate::lifecycle::schedule::missed_installments;
+use crate::lifecycle::schedule::{missed_installments, unpaid_accrued_interest};
 use crate::lifecycle::state::loan_ext;
 use crate::lifecycle::waterfall::{apply_waterfall, WaterfallInput};
 use crate::math;
@@ -118,9 +118,12 @@ pub fn record_recovery_handler(ctx: Context<RecordRecovery>, proceeds: u64) -> R
     // ---- 2. alacak ve zarar sırası ----
     let now = Clock::get()?.unix_timestamp;
     let periods = missed_installments(now, loan.next_due, pool.grace_seconds, pool.period_seconds)?;
-    let accrued_interest = math::interest_for_period(loan.remaining_principal, loan.rate_bps)?
-        .checked_mul(periods)
-        .ok_or(GlassError::MathOverflow)?;
+    // Birikmiş faiz: tüm gecikmiş dönemler − Late2'de teminattan zaten ödenen faiz (iki kez sayılmaz).
+    let accrued_interest = unpaid_accrued_interest(
+        math::interest_for_period(loan.remaining_principal, loan.rate_bps)?,
+        periods,
+        loan_ext::interest_settled(loan),
+    )?;
     let collateral_available = expected_collateral(loan)?.min(ctx.accounts.collateral.amount);
     let w = apply_waterfall(&WaterfallInput {
         remaining_principal: loan.remaining_principal,
