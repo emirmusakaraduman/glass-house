@@ -314,7 +314,21 @@ async function main() {
   const kp = {} as Record<Role, Keypair>;
   const ata = {} as Record<Role, PublicKey>;
   for (const role of ROLES) {
+    // devnet.json'da bu rol için cüzdan kayıtlıysa (örn. Kişi 1'in create-wallets çıktısı), havuzların rolleri
+    // zincirde O cüzdanlara sabitlenmiştir: approve/confirm/crank için o gizli anahtarlar gerekir.
+    // Yanlış (yeni) bir anahtar üretip sessizce devam etmek yerine dur.
+    const known = d.wallets[role]?.pubkey;
+    if (known && !fs.existsSync(path.join(KEYS_DIR, `${role}.json`))) {
+      throw new Error(
+        `${role}: deployments/devnet.json'da kayıtlı cüzdan ${known}, ama .keys/${role}.json yok. ` +
+          `Bu anahtarlar create-wallets.ts'i çalıştıranın makinesindedir (.keys/, paylaşılmaz). Seed'i o kişi çalıştırsın ` +
+          `ya da .keys/ klasörü güvenli bir kanaldan (commit ETMEDEN) aktarılsın.`,
+      );
+    }
     const { kp: k, created } = loadOrCreateKeypair(role);
+    if (known && known !== k.publicKey.toBase58()) {
+      throw new Error(`${role}: .keys/${role}.json (${k.publicKey.toBase58()}) devnet.json'daki cüzdanla (${known}) uyuşmuyor.`);
+    }
     kp[role] = k;
     const target = Math.round(SOL_TARGET[role] * LAMPORTS_PER_SOL);
     const have = await conn.getBalance(k.publicKey);
