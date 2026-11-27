@@ -1,5 +1,6 @@
 import "server-only";
 import type { AssetType } from "../types";
+import { isUsdLike, keepRealLinks, parsePrice } from "./price";
 import type { HouseListing, Listing, VehicleListing } from "./types";
 
 // Server-side Firecrawl call. The API key never leaves the server.
@@ -29,7 +30,7 @@ const HOUSE_SCHEMA = {
         type: "object",
         properties: {
           title: { type: "string" },
-          price: { type: "number", description: "Asking price as a plain number" },
+          price: { type: ["number", "string"], description: "Asking price exactly as shown on the page" },
           currency: { type: "string", description: "ISO code, e.g. USD" },
           city: { type: "string" },
           district: { type: "string", description: "Neighborhood or district" },
@@ -39,7 +40,7 @@ const HOUSE_SCHEMA = {
           bedrooms: { type: "number" },
           buildingAgeYears: { type: "number", description: "Building age in years, or derive from year built" },
         },
-        required: ["title", "price"],
+        required: ["title", "price", "url"],
       },
     },
   },
@@ -55,7 +56,7 @@ const VEHICLE_SCHEMA = {
         type: "object",
         properties: {
           title: { type: "string" },
-          price: { type: "number", description: "Asking price as a plain number" },
+          price: { type: ["number", "string"], description: "Asking price exactly as shown on the page" },
           currency: { type: "string", description: "ISO code, e.g. USD" },
           city: { type: "string" },
           url: { type: "string", description: "Absolute URL of the listing page" },
@@ -67,18 +68,21 @@ const VEHICLE_SCHEMA = {
           transmission: { type: "string" },
           fuel: { type: "string" },
         },
-        required: ["title", "price"],
+        required: ["title", "price", "url"],
       },
     },
   },
   required: ["listings"],
 } as const;
 
+// The extractor will invent plausible listings for a page that has none, so the prompt forbids
+// it and scrapeOne also keeps only items whose URL is a real link on the page.
+const NO_INVENTING = " Copy values exactly as shown. If the page lists none, return an empty list. Never invent a listing, price or URL.";
 const PROMPTS: Record<AssetType, string> = {
   house:
-    "Extract every residential property for sale on this page (houses and apartments). One item per listing. Skip ads, rentals and project teasers without a price.",
+    "Extract every residential property for sale on this page (houses and apartments). One item per listing, with its link. Skip ads, rentals and project teasers without a price." + NO_INVENTING,
   vehicle:
-    "Extract every used car for sale on this page. One item per listing. Skip ads, motorcycles and listings without a price.",
+    "Extract every used car for sale on this page. One item per listing, with its link. Skip ads, motorcycles and listings without a price." + NO_INVENTING,
 };
 
 export function liveSourcesFor(type: AssetType): string[] {
@@ -89,8 +93,23 @@ export function liveSourcesFor(type: AssetType): string[] {
     .filter(Boolean);
 }
 
-export function liveEnabled(type: AssetType): boolean {
-  return !!process.env.FIRECRAWL_API_KEY && process.env.FIRECRAWL_LIVE !== "off" && liveSourcesFor(type).length > 0;
+/**
+ * Cities that may use live search, from FIRECRAWL_LIVE_CITIES ("Panama City" or "A|B").
+ * Unset means every city. Other cities get sample data with no warning.
+ */
+export function liveCities(): string[] | null {
+  const raw = process.env.FIRECRAWL_LIVE_CITIES?.trim();
+  if (!raw) return null;
+  return raw
+    .split(/[|,]/)
+    .map((s) => s.trim().replace(/^"|"$/g, "").toLowerCase())
+    .filter(Boolean);
+}
+
+export function liveEnabled(type: AssetType, city: string): boolean {
+  if (!process.env.FIRECRAWL_API_KEY || process.env.FIRECRAWL_LIVE === "off" || liveSourcesFor(type).length === 0) return false;
+  const cities = liveCities();
+  return !cities || cities.includes(city.trim().toLowerCase());
 }
 
 function fillTemplate(tpl: string, q: LiveQuery) {
@@ -112,10 +131,9 @@ const num = (v: unknown): number | null => {
 const str = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.trim() : null);
 
 function normalize(type: AssetType, raw: Record<string, unknown>, q: LiveQuery, sourceUrl: string, i: number): Listing | null {
-  const price = num(raw.price);
-  const currency = (str(raw.currency) ?? "USD").toUpperCase();
   // Panama (balboa pegged 1:1, prices quoted in USD), Ecuador and El Salvador use USD.
-  if (!price || (currency !== "USD" && currency !== "US$" && currency !== "$" && currency !== "B/.")) return null;
+  const price = parsePrice(raw.price);
+  if (!price || !isUsdLike(str(raw.currency))) return null;
   const host = new URL(sourceUrl).hostname.replace(/^www\./, "");
   const url = str(raw.url);
   const base = {
@@ -155,19 +173,20 @@ async function scrapeOne(url: string, q: LiveQuery, signal: AbortSignal): Promis
     body: JSON.stringify({
       url,
       onlyMainContent: true,
-      formats: [{ type: "json", schema: q.type === "house" ? HOUSE_SCHEMA : VEHICLE_SCHEMA, prompt: PROMPTS[q.type] }],
+      formats: [{ type: "json", schema: q.type === "house" ? HOUSE_SCHEMA : VEHICLE_SCHEMA, prompt: PROMPTS[q.type] }, "links"],
     }),
     signal,
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Firecrawl ${res.status} for ${new URL(url).hostname}`);
-  const body = (await res.json()) as { success?: boolean; data?: { json?: { listings?: unknown } } };
+  const body = (await res.json()) as { success?: boolean; data?: { json?: { listings?: unknown }; links?: unknown } };
   const list = body.data?.json?.listings;
-  return Array.isArray(list) ? (list.filter((x) => x && typeof x === "object") as Record<string, unknown>[]) : [];
+  const rows = Array.isArray(list) ? (list.filter((x) => x && typeof x === "object") as Record<string, unknown>[]) : [];
+  return keepRealLinks(rows, Array.isArray(body.data?.links) ? (body.data.links as unknown[]) : [], url);
 }
 
 /** Fetches live listings from every configured source in parallel. Throws if nothing usable comes back. */
-export async function fetchLiveListings(q: LiveQuery, timeoutMs = Number(process.env.FIRECRAWL_TIMEOUT_MS ?? 15000)): Promise<Listing[]> {
+export async function fetchLiveListings(q: LiveQuery, timeoutMs = Number(process.env.FIRECRAWL_TIMEOUT_MS ?? 8000)): Promise<Listing[]> {
   const sources = liveSourcesFor(q.type).map((tpl) => fillTemplate(tpl, q));
   const signal = AbortSignal.timeout(timeoutMs);
   const settled = await Promise.allSettled(sources.map((u) => scrapeOne(u, q, signal).then((rows) => ({ u, rows }))));

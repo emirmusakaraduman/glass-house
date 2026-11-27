@@ -11,11 +11,11 @@ import type { AssetType } from "../src/lib/types";
 async function main() {
   const all: Listing[] = [];
   for (const type of ["house", "vehicle"] as AssetType[]) {
-    if (!liveEnabled(type)) {
-      console.warn(`skip ${type}: FIRECRAWL_API_KEY or source URLs missing`);
-      continue;
-    }
     for (const city of CITIES[type]) {
+      if (!liveEnabled(type, city)) {
+        console.warn(`skip ${type} / ${city}: no key, no source URLs, or city not in FIRECRAWL_LIVE_CITIES`);
+        continue;
+      }
       try {
         const rows = await fetchLiveListings({ type, city, minPrice: 0, maxPrice: type === "house" ? 400_000 : 40_000 }, 60_000);
         console.log(`${type} / ${city}: ${rows.length}`);

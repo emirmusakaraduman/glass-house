@@ -31,7 +31,8 @@ function inRange(l: Listing, q: ListingsQuery) {
 export async function findListings(q: ListingsQuery): Promise<ListingsResponse> {
   const base = { query: { type: q.type, city: q.city, minPrice: q.minPrice, maxPrice: q.maxPrice } };
 
-  if (q.live && liveEnabled(q.type)) {
+  // Live only where configured (FIRECRAWL_LIVE_CITIES); other cities fall to sample data quietly.
+  if (q.live && liveEnabled(q.type, q.city)) {
     // Bucket the price so nearby budgets share a cache entry and Firecrawl quota is protected.
     const key = [q.type, q.city.toLowerCase(), Math.floor(q.minPrice / 5000), Math.ceil(q.maxPrice / 5000)].join("|");
     const hit = cache.get(key);
