@@ -6,7 +6,12 @@
     "build": "anchor build --no-idl -- --arch v0 && anchor idl build -o target/idl/glasshouse.json -t target/types/glasshouse.ts",
     "test": "mocha -n no-experimental-strip-types -r ts-node/register -t 1000000 \"tests/**/*.test.ts\"",
     "sim:stress": "ts-node -P ./tsconfig.json scripts/stress.ts",
-    "seed:demo": "ts-node -P ./tsconfig.json scripts/seed.ts"
+    "seed:demo": "ts-node -P ./tsconfig.json scripts/seed.ts",
+    "test:localnet": "bash scripts/test-localnet.sh",
+    "deploy:usdc": "ts-node -P scripts/tsconfig.json scripts/create-mock-usdc.ts",
+    "deploy:wallets": "ts-node -P scripts/tsconfig.json scripts/create-wallets.ts",
+    "deploy:pools": "ts-node -P scripts/tsconfig.json scripts/create-pools.ts",
+    "idl:export": "ts-node -P scripts/tsconfig.json scripts/export-idl.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "0.32.1",

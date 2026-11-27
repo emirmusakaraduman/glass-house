@@ -102,6 +102,10 @@ ilgili Pool PDA'sıdır (LoanEscrow/CollateralEscrow için de Pool imzalar).
 Geçişler: `Pending→Approved|Rejected`, `Approved→Funded`, `Funded→Active|Cancelled`,
 `Active→Late1→Late2→(Active|Defaulted→Recovered)`, `Active→PaidOff`.
 
+**`Loan.reserved` kullanımı (Kişi 2):** `reserved[0..8]` = `collateral_deducted` (u64 LE), crank'in
+Late2 adımında CollateralEscrow'dan kestiği toplam tutar. Beklenen teminat = `3 × installment −
+collateral_deducted`. Struct ve IDL değişmez; kalan 56 bayt boş. Kaynak: `lifecycle::state::loan_ext`.
+
 Escrow tutarı kredi alanlarından türetilir (ayrı alan yok): peşinat = `price − principal`,
 ücret = `origination_fee(principal)` (anaparanın %1'i, yukarı), teminat = `3 × installment`.
 

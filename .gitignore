@@ -1,6 +1,7 @@
 # Sırlar — asla commit'lenmez
 .keys/
 *.keypair.json
+*-keypair.json
 id.json
 .env
 .env.*

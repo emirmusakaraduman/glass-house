@@ -1,0 +1,2 @@
+# Bash betikleri Windows checkout'unda da LF kalmalı (CRLF, WSL/Linux'ta betiği bozar).
+*.sh text eol=lf
