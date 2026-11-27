@@ -45,9 +45,10 @@ export function mapStatus(raw: Record<string, unknown>): LoanStatus {
  */
 export function pdas(programId: PublicKey) {
   const find = (seeds: (Buffer | Uint8Array)[]) => PublicKey.findProgramAddressSync(seeds, programId)[0];
+  // DataView, not Buffer.writeBigUInt64LE: the browser Buffer polyfill Next bundles lacks the BigInt methods.
   const u64 = (n: number | bigint) => {
-    const b = Buffer.alloc(8);
-    b.writeBigUInt64LE(BigInt(n));
+    const b = new Uint8Array(8);
+    new DataView(b.buffer).setBigUint64(0, BigInt(n), true);
     return b;
   };
   return {
