@@ -432,10 +432,13 @@ async function main() {
         createAssociatedTokenAccountIdempotent(conn, payer, a.shareMint, kp[role].publicKey),
       );
       const held = (await getAccount(conn, sharesAta)).amount;
-      if (held === 0n) {
+      // Pay fiyatı ≈ 1,0: yatırım hedefin %90'ından azsa farkı yatır (havuz önceden küçük bir yatırımla
+      // kurulmuş olabilir). Yeterliyse atla; böylece tekrar çalıştırmada çifte yatırım olmaz.
+      if (held < (amount * 9n) / 10n) {
+        const topUp = amount - held;
         await retry(() =>
           program.methods
-            .deposit(bn(amount))
+            .deposit(bn(topUp))
             .accountsPartial({
               depositor: kp[role].publicKey,
               pool,
@@ -448,7 +451,7 @@ async function main() {
             .signers([kp[role]])
             .rpc(),
         );
-        log(`  ${name}: ${role} ${amount / USDC} USDC yatırdı`);
+        log(`  ${name}: ${role} ${topUp / USDC} USDC yatırdı`);
       }
     }
     p = await program.account.pool.fetch(pool);
