@@ -4,6 +4,7 @@
 
 import { expect } from "chai";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { decodeEvent, EventLayout } from "./lib/events";
 import {
   assertInvariants,
   collateralDeducted,
@@ -84,40 +85,18 @@ function expectedWaterfall(c: Ctx, proceeds: bigint) {
   };
 }
 
-/**
- * `RecoveryRecorded` event'ini ham log'tan çözer. Anchor'ın EventParser'ı u64 alanları BN olarak
- * döndürür ve bn.js bu paketle çok sözcüklü değerlerde (> 2^26, örn. 50.000 USDC) bozuk BN üretiyor;
- * bu yüzden alanlar doğrudan baytlardan BigInt olarak okunur. Düzen: lifecycle/events.rs.
- */
-function parseRecoveryRecorded(env: TestEnv, logs: string[]) {
-  const idlEvent = (env.program!.idl.events ?? []).find((e: any) => e.name.toLowerCase() === "recoveryrecorded");
-  if (!idlEvent) throw new Error("IDL'de RecoveryRecorded yok");
-  const disc = Buffer.from(idlEvent.discriminator);
-  const hits = logs
-    .filter((l) => l.startsWith("Program data: "))
-    .map((l) => Buffer.from(l.slice("Program data: ".length), "base64"))
-    .filter((b) => b.subarray(0, 8).equals(disc));
-  expect(hits).to.have.length(1);
-  const b = hits[0];
-  let o = 8;
-  const key = () => new PublicKey(b.subarray(o, (o += 32)));
-  const u64 = () => {
-    const v = b.readBigUInt64LE(o);
-    o += 8;
-    return v;
-  };
-  return {
-    pool: key(),
-    loan: key(),
-    loanId: u64(),
-    proceeds: u64(),
-    collateralUsed: u64(),
-    loss: u64(),
-    firstLossUsed: u64(),
-    reserveUsed: u64(),
-    seniorLoss: u64(),
-  };
-}
+/** lifecycle/events.rs RecoveryRecorded (alan sırası Rust struct'ıyla aynı). Çözücü: tests/lib/events.ts. */
+const RECOVERY_RECORDED: EventLayout = [
+  ["pool", "pubkey"],
+  ["loan", "pubkey"],
+  ["loanId", "u64"],
+  ["proceeds", "u64"],
+  ["collateralUsed", "u64"],
+  ["loss", "u64"],
+  ["firstLossUsed", "u64"],
+  ["reserveUsed", "u64"],
+  ["seniorLoss", "u64"],
+];
 
 async function recover(c: Ctx, proceeds: bigint, coSigner?: Keypair) {
   const agent = c.env.recoveryAgent;
@@ -299,7 +278,7 @@ describe("record_recovery", () => {
     );
     assertInvariants(c.env, c.pool, [c.loan]);
 
-    const d = parseRecoveryRecorded(c.env, res.logs());
+    const d = decodeEvent(c.env, res.logs(), "RecoveryRecorded", RECOVERY_RECORDED);
     expect(d.pool.toBase58()).to.equal(c.pool.pool.toBase58());
     expect(d.loanId).to.equal(readLoan(c.env, c.loan).id);
     expect(d.proceeds).to.equal(w.proceedsUsed);
