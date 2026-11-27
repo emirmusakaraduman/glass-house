@@ -30,6 +30,9 @@ export function mapStatus(raw: Record<string, unknown>): LoanStatus {
   const k = Object.keys(raw)[0]?.toLowerCase();
   const table: Record<string, LoanStatus> = {
     pending: "Pending",
+    // The program has a separate Approved status (docs/STATE.md). The UI models it as Pending
+    // with an appraisal set, so StatusBadge shows "Approved" and the Fund button appears.
+    approved: "Pending",
     rejected: "Rejected",
     funded: "Funded",
     cancelled: "Cancelled",

@@ -7,7 +7,7 @@ own capital takes the first loss.
 ## Run it
 
 ```bash
-cd web
+cd app
 npm install
 cp .env.example .env.local
 npm run dev            # http://localhost:3000
