@@ -49,6 +49,18 @@ const USDC_MINT_AMOUNT: Record<Role, bigint> = {
   crank: 0n,
 };
 
+/** RPC düğümü yeni oluşturulan hesabı hemen görmeyebilir (TokenAccountNotFoundError): kısa aralıkla yeniden dene. */
+async function retry<T>(fn: () => Promise<T>, tries = 8): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= tries) throw e;
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
 async function main() {
   const provider = getProvider();
   const conn = provider.connection;
@@ -81,7 +93,7 @@ async function main() {
       );
       await sendAndConfirmTransaction(conn, tx, [payer]);
     }
-    const ata = await getOrCreateAssociatedTokenAccount(conn, payer, mint, kp.publicKey);
+    const ata = await retry(() => getOrCreateAssociatedTokenAccount(conn, payer, mint, kp.publicKey));
     if (USDC_MINT_AMOUNT[role] > 0n && ata.amount < USDC_MINT_AMOUNT[role]) {
       await mintTo(conn, payer, mint, ata.address, payer, USDC_MINT_AMOUNT[role] - ata.amount);
     }

@@ -44,10 +44,19 @@ export const flag = (name: string): string | undefined => {
 
 export const log = (msg: string) => console.log(EXECUTE ? msg : `[dry-run] ${msg}`);
 
+/** RPC adresini yazdırırken sorgu parametrelerini ve yolu (API anahtarı) at: yalnızca ana makine adı. */
+export function safeEndpoint(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "(geçersiz adres)";
+  }
+}
+
 export function getProvider(): anchor.AnchorProvider {
   const provider = anchor.AnchorProvider.env(); // ANCHOR_PROVIDER_URL + ANCHOR_WALLET
   anchor.setProvider(provider);
-  console.log(`cluster : ${provider.connection.rpcEndpoint}`);
+  console.log(`cluster : ${safeEndpoint(provider.connection.rpcEndpoint)}`);
   console.log(`deployer: ${provider.wallet.publicKey.toBase58()}`);
   console.log(`mod     : ${EXECUTE ? "EXECUTE (zincire yazar)" : "dry-run (zincire yazmaz)"}`);
   return provider;
@@ -100,7 +109,12 @@ export function readDeployment(): Deployment {
 export function writeDeployment(d: Deployment) {
   if (!EXECUTE) return;
   d.updatedAt = new Date().toISOString();
-  fs.writeFileSync(DEPLOY_FILE, JSON.stringify(d, null, 2) + "\n");
+  const json = JSON.stringify(d, null, 2) + "\n";
+  // Güvenlik: RPC API anahtarı gibi bir gizli bilgi repoya giden dosyaya asla yazılmaz.
+  if (/api[-_]?key|helius|https?:\/\//i.test(json)) {
+    throw new Error("devnet.json içine RPC adresi/API anahtarı yazılmak üzere; işlem durduruldu.");
+  }
+  fs.writeFileSync(DEPLOY_FILE, json);
 }
 
 export const pk = (s: string) => new PublicKey(s);

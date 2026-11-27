@@ -18,7 +18,7 @@ async function main() {
   if (!EXECUTE) return;
 
   const mint = await createMint(provider.connection, payer, payer.publicKey, null, 6);
-  d.cluster = provider.connection.rpcEndpoint;
+  d.cluster = "devnet"; // RPC adresi (API anahtarı içerebilir) ASLA dosyaya yazılmaz
   d.usdcMint = mint.toBase58();
   writeDeployment(d);
   console.log(`usdcMint: ${d.usdcMint}`);
