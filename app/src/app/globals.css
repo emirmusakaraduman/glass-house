@@ -1,0 +1,1150 @@
+@import "tailwindcss";
+
+/*
+  GlassHouse visual system (dark glass, cyan accent)
+  - Navy night (#0B1120) with soft cyan and deep-blue glows; the product is a lit glass house.
+  - Surfaces are glass: #131C31 at 70% with blur, 1px white/10 edge, a thin highlight on top;
+    hover turns the edge cyan.
+  - Cyan (#00D2FF) carries structure: icons, active tabs and menu items, links, focus, glows,
+    the home-pool chart series and gradient headlines.
+  - Gold (#F59E0B) is only for the one main action on a screen (and at most one key figure),
+    always with navy text. Never in charts.
+  - Charts: home pool cyan, car pool indigo (#818CF8).
+  - Loan health: ok green, warn orange (always with an AlertTriangle), bad rose.
+  - Token names (ink, muted, steel, frost, night) are kept so every screen picks up the palette:
+      ink = primary text, muted = secondary text, steel = cyan accent (links, edges),
+      frost = page background, night = solid surface.
+  - Contrast on a glass card: ink 16.0:1, muted 6.4:1, cyan 9.8:1, indigo 5.9:1, ok 9.1:1,
+    warn 7.8:1 (6.7:1 on its 10% tint), bad-fg 5.5:1 or more on bad tints. Navy on gold 8.8:1
+    (11.3:1 on hover). Rose #F43F5E is 4.2:1 on its own tint, so red text uses bad-fg (#FB7185);
+    #F43F5E stays for borders, fills, dots and the loss hatch.
+*/
+
+@theme {
+  --color-frost: #0b1120;
+  --color-night: #131c31;
+  --color-surface: #131c31;
+  --color-ink: #f1f5f9;
+  --color-muted: rgb(203 213 225 / 0.7);
+  --color-steel: #00d2ff;
+  --color-steel-soft: #94a3b8;
+
+  --color-accent: #00d2ff;
+  --color-accent-light: #7de6ff;
+  --color-accent-deep: #0094b8;
+  --color-accent-pale: #e0f7ff;
+  --color-gold: #f59e0b;
+  --color-gold-hover: #fbbf24;
+  --color-indigo: #818cf8;
+
+  --color-ok: #34d399;
+  --color-warn: #fb923c;
+  --color-bad: #f43f5e;
+  --color-bad-fg: #fb7185;
+
+  --radius-card: 20px;
+  --radius-inner: 12px;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+  color: var(--color-ink);
+  background-color: var(--color-frost);
+  font-feature-settings: "tnum" 1;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Soft glows behind everything: fixed, never interactive, low opacity. Cyan and deep blue only. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 32rem at 50% -12rem, rgb(0 210 255 / 0.13), transparent 70%),
+    radial-gradient(40rem 30rem at -8rem 8rem, rgb(30 64 175 / 0.22), transparent 70%),
+    radial-gradient(42rem 32rem at calc(100% + 8rem) 30%, rgb(0 210 255 / 0.07), transparent 70%),
+    radial-gradient(50rem 30rem at 70% calc(100% + 10rem), rgb(37 99 235 / 0.1), transparent 70%);
+}
+
+::selection {
+  background: rgb(0 210 255 / 0.35);
+  color: #fff;
+}
+
+/* Component classes live in the components layer so Tailwind utilities can override them. */
+@layer components {
+/* ---------------------------------------------------------------- type */
+
+.display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+
+.title {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* Small data labels. Plus Jakarta Sans has no width axis, so "dense" is a weight and tracking change. */
+.dense {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cyan to pale-cyan gradient for headlines; the darkest stop is 9.8:1 on a card. */
+.text-gradient {
+  background: linear-gradient(100deg, #00d2ff 0%, #7de6ff 55%, #e0f7ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The one gold figure a screen may have (the finder's limit). */
+.text-gold-gradient {
+  background: linear-gradient(100deg, #f59e0b 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+.pane {
+  position: relative;
+  background: rgb(19 28 49 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 24px 48px -28px rgb(0 0 0 / 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: border-color 160ms ease;
+}
+
+.pane:hover {
+  border-color: rgb(0 210 255 / 0.4);
+}
+
+/* Cyan-tinted card for the one thing on a screen that matters most. */
+.pane-highlight {
+  background:
+    linear-gradient(180deg, rgb(0 210 255 / 0.12), rgb(0 210 255 / 0.03)),
+    rgb(19 28 49 / 0.7);
+  border-color: rgb(0 210 255 / 0.3);
+}
+
+.pane-glow {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 0 0 1px rgb(0 210 255 / 0.12),
+    0 18px 60px -14px rgb(0 210 255 / 0.32);
+}
+
+.pane-flat {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-inner);
+  background: rgb(255 255 255 / 0.03);
+}
+
+/* Main action, one per screen: gold fill, navy text (8.8:1), a light gold glow. */
+.btn-gold {
+  color: #0b1120;
+  background: var(--color-gold);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 8px 22px -10px rgb(245 158 11 / 0.6);
+}
+.btn-gold:hover:not(:disabled) {
+  background: var(--color-gold-hover);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    0 10px 28px -10px rgb(251 191 36 / 0.75);
+}
+
+/* Important but not the main action: cyan-tinted glass with a cyan edge. */
+.btn-accent {
+  color: var(--color-ink);
+  background: rgb(0 210 255 / 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 210 255 / 0.5),
+    0 6px 18px -10px rgb(0 210 255 / 0.5);
+}
+.btn-accent:hover:not(:disabled) {
+  background: rgb(0 210 255 / 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 210 255 / 0.75),
+    0 8px 22px -10px rgb(0 210 255 / 0.6);
+}
+
+/* Selected state: active tabs, filter chips, step dots, the slider bubble. Navy on cyan is 10.5:1. */
+.fill-accent {
+  color: #0b1120;
+  background: var(--color-accent);
+  box-shadow: 0 6px 18px -8px rgb(0 210 255 / 0.65);
+}
+
+/* Decorative accent gradient (bars, progress, stepper lines). */
+.bg-accent-gradient {
+  background: linear-gradient(90deg, var(--color-accent-deep) 0%, var(--color-accent) 100%);
+}
+
+/* Hatch used wherever a loss has eaten into a layer */
+.loss-hatch {
+  background-image: repeating-linear-gradient(135deg, rgb(244 63 94 / 0.8) 0 4px, rgb(244 63 94 / 0.25) 4px 8px);
+}
+
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Headings that receive focus programmatically (step changes) don't need a ring; they aren't controls. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 0.35;
+}
+
+select option {
+  background: #131c31;
+  color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------- wallet adapter (quiet style, not gold) */
+
+.wallet-adapter-button {
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 9999px !important;
+  line-height: 40px !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.wallet-adapter-button-trigger {
+  color: var(--color-ink) !important;
+  background: rgb(19 28 49 / 0.7) !important;
+  box-shadow: inset 0 0 0 1px rgb(0 210 255 / 0.45);
+  backdrop-filter: blur(12px);
+}
+.wallet-adapter-button-trigger:not([disabled]):hover {
+  background: rgb(0 210 255 / 0.1) !important;
+  box-shadow: inset 0 0 0 1px rgb(0 210 255 / 0.75);
+}
+.wallet-adapter-button:not([disabled]):focus-visible {
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 2px;
+}
+.wallet-adapter-button img {
+  width: 20px;
+  height: 20px;
+}
+.wallet-adapter-dropdown-list {
+  font-family: var(--font-sans) !important;
+  background: rgb(19 28 49 / 0.94) !important;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-inner) !important;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.7) !important;
+}
+.wallet-adapter-dropdown-list-item {
+  border-radius: 8px !important;
+  font-size: 14px !important;
+}
+.wallet-adapter-dropdown-list-item:not([disabled]):hover {
+  background-color: rgb(0 210 255 / 0.15) !important;
+}
+.wallet-adapter-modal-overlay {
+  background: rgb(11 17 32 / 0.75) !important;
+  backdrop-filter: blur(6px);
+}
+.wallet-adapter-modal-wrapper {
+  font-family: var(--font-sans) !important;
+  background: linear-gradient(180deg, rgb(24 35 60 / 0.94), rgb(19 28 49 / 0.96)) !important;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-card) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 30px 80px -24px rgb(0 210 255 / 0.3) !important;
+  backdrop-filter: blur(24px);
+}
+.wallet-adapter-modal-title {
+  font-weight: 700 !important;
+  color: var(--color-ink) !important;
+}
+.wallet-adapter-modal-button-close {
+  background: rgb(255 255 255 / 0.08) !important;
+}
+.wallet-adapter-modal-button-close:focus-visible {
+  outline-color: var(--color-accent) !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button {
+  border-radius: var(--radius-inner) !important;
+  height: 52px !important;
+  line-height: 52px !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover {
+  background-color: rgb(0 210 255 / 0.12) !important;
+}
+.wallet-adapter-modal-list-more {
+  color: var(--color-muted) !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* ---------------------------------------------------------------- landing hero */
+
+/* Cyan to pale-cyan wordmark, #00D2FF to #E0F7FF. */
+.hero-wordmark {
+  background: linear-gradient(100deg, #00d2ff 0%, #5fe1ff 40%, #b3f0ff 75%, #e0f7ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  filter: drop-shadow(0 6px 28px rgb(0 210 255 / 0.3));
+}
+
+/* The only gold glow: a faint halo behind the hero's main button. */
+.gold-halo {
+  position: relative;
+}
+.gold-halo::before {
+  content: "";
+  position: absolute;
+  inset: -14px -24px;
+  z-index: -1;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgb(245 158 11 / 0.22), transparent);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- 3D loss stack, sliders */
+
+/* Very slow sway for GlassStack3D (one cycle every 20s). Off with reduced motion. */
+@keyframes gh-sway {
+  0%,
+  100% {
+    transform: rotateY(-6deg);
+  }
+  50% {
+    transform: rotateY(6deg);
+  }
+}
+.gh-sway {
+  animation: gh-sway 20s ease-in-out infinite;
+}
+
+/* Large, touch-friendly range input. Set --fill (0%..100%) inline for the cyan part of the track. */
+.gh-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  cursor: pointer;
+}
+.gh-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-accent-deep) 0%, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.1) var(--fill, 0%));
+}
+.gh-range::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.1);
+}
+.gh-range::-moz-range-progress {
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--color-accent-deep), var(--color-accent));
+}
+.gh-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -9px;
+  border-radius: 9999px;
+  border: 3px solid #fff;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.25), 0 4px 12px rgb(0 0 0 / 0.5);
+}
+.gh-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 3px solid #fff;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.25);
+}
+.gh-range:focus-visible {
+  outline: none;
+}
+.gh-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.8);
+}
+.gh-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.8);
+}
+
+/* ---------------------------------------------------------------- hero line art (GlassHouseLineArt, the photo-error fallback) */
+
+/*
+  Every element's resting style is the final frame; each animation only runs from a hidden
+  "from" state (fill-mode both). Reduced motion turns animations off below, so the final frame
+  shows at once. Only transform, opacity and stroke-dashoffset animate.
+  Per-element timing comes from inline --d (delay) and --t (duration).
+*/
+.gha {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.gha .gha-draw {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+  animation: gha-draw var(--t, 0.5s) var(--ease) var(--d, 0s) both;
+}
+@keyframes gha-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+.gha .gha-fade {
+  animation: gha-fade var(--t, 0.4s) ease-out var(--d, 0s) both;
+}
+@keyframes gha-fade {
+  from {
+    opacity: 0;
+  }
+}
+/* Tree tops grow from their base with a small overshoot. */
+.gha .gha-grow {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: gha-grow 0.6s var(--ease) var(--d, 0s) both;
+}
+@keyframes gha-grow {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.gha .gha-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gha-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) both;
+}
+@keyframes gha-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+/* One glint across the glass when the panels are in. */
+.gha .gha-sweep {
+  opacity: 0;
+  transform: skewX(-20deg);
+  animation: gha-sweep var(--t, 0.6s) ease-in-out var(--d, 0s) both;
+}
+@keyframes gha-sweep {
+  0% {
+    transform: skewX(-20deg) translateX(0);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: skewX(-20deg) translateX(470px);
+    opacity: 0;
+  }
+}
+/* Money moves: coin → into the escrow lock → out to the title check. */
+.gha .gha-dot {
+  opacity: 0;
+  animation: gha-dot 0.6s ease-in-out 2.85s both;
+}
+@keyframes gha-dot {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  48% {
+    transform: translateX(46px);
+    opacity: 0;
+  }
+  58% {
+    transform: translateX(66px);
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  92% {
+    transform: translateX(100px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+}
+/* The car comes in from the right, slows down and parks; wheels turn with it. */
+.gha .gha-car {
+  animation: gha-drive 1s cubic-bezier(0.16, 1, 0.3, 1) 3.6s both;
+}
+@keyframes gha-drive {
+  from {
+    transform: translateX(240px);
+  }
+}
+.gha .gha-wheel {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gha-spin 1s cubic-bezier(0.16, 1, 0.3, 1) 3.6s both;
+}
+@keyframes gha-spin {
+  from {
+    transform: rotate(1060deg);
+  }
+}
+.gha .gha-reflection {
+  opacity: 0.16;
+}
+.gha .gha-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.55;
+  animation: gha-pulse var(--t, 0.9s) ease-out var(--d, 0s) both;
+}
+@keyframes gha-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+}
+/* Idle, after the build: a thin glint every ~8s and a faint flicker in the windows. */
+.gha .gha-glint {
+  opacity: 0;
+  transform: skewX(-20deg);
+  animation: gha-glint 8s ease-in-out 6s infinite;
+}
+@keyframes gha-glint {
+  0% {
+    transform: skewX(-20deg) translateX(0);
+    opacity: 0;
+  }
+  2%,
+  11% {
+    opacity: 0.7;
+  }
+  13%,
+  100% {
+    transform: skewX(-20deg) translateX(470px);
+    opacity: 0;
+  }
+}
+.gha .gha-flicker {
+  animation: gha-flicker 3.2s ease-in-out 5.5s infinite alternate;
+}
+@keyframes gha-flicker {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.86;
+  }
+}
+/* Off-screen or hidden tab: the idle loops wait. */
+.gha[data-paused="true"] .gha-idle {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------- hero (GlassHouseHero) */
+
+/*
+  "Blueprint to real home". Same rules as above: resting style = final frame, animations run from
+  a hidden "from" state with fill-mode both, so reduced motion shows the final frame at once.
+  Only transform, opacity, clip-path, filter and stroke-dashoffset animate.
+  Timeline (s): grid 0–0.5 · ground 0.3–0.9 · house 0.7–2.2 · glass 1.6–2.4 · photo 2.2–3.2 ·
+  car 2.8–3.8 · lines settle 3.2–4.2 · capsule 3.6–4.6 · chips 4.4–5.4 · idle loops after that.
+*/
+.ghh {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ghh-mx: 0;
+  --ghh-my: 0;
+}
+.ghh-run {
+  position: relative;
+}
+.ghh-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 868 / 561;
+  isolation: isolate;
+}
+.ghh-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+svg.ghh-layer {
+  overflow: visible;
+  pointer-events: none;
+}
+.ghh-img {
+  object-fit: cover;
+  user-select: none;
+}
+
+/* Mouse parallax (desktop only; the vars stay 0 otherwise). Different depth per layer. */
+.ghh [data-depth] {
+  transform: translate3d(calc(var(--ghh-mx) * var(--depth) * 1px), calc(var(--ghh-my) * var(--depth) * 1px), 0);
+  transition: transform 700ms var(--ease);
+}
+.ghh [data-depth="glow"] {
+  --depth: -2;
+}
+.ghh [data-depth="photo"] {
+  --depth: 3;
+}
+.ghh [data-depth="lines"] {
+  --depth: 3.6;
+}
+.ghh [data-depth="capsule"] {
+  --depth: 4.5;
+}
+.ghh [data-depth="chips"] {
+  --depth: 6;
+}
+@media (min-width: 1024px) {
+  .ghh-chips {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .ghh-chips li {
+    pointer-events: auto;
+  }
+}
+
+/* L0: ambient light under the house. */
+.ghh-ambient {
+  inset: -8% 0 -10%;
+  height: auto;
+  background:
+    radial-gradient(46% 40% at 50% 60%, color-mix(in srgb, var(--color-accent) 15%, transparent), transparent 72%),
+    radial-gradient(26% 18% at 48% 68%, color-mix(in srgb, var(--color-gold) 7%, transparent), transparent 72%),
+    radial-gradient(44% 6% at 52% 80%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 100%);
+  animation: ghh-fade 1.4s ease-out 0.1s both;
+}
+
+/* L1: the photo dissolves into the page on every side; its rectangle never shows. */
+.ghh-vignette {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 16%, #000 74%, transparent 99%),
+    linear-gradient(to right, transparent 1%, #000 16%, #000 86%, transparent 99%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 16%, #000 74%, transparent 99%),
+    linear-gradient(to right, transparent 1%, #000 16%, #000 86%, transparent 99%);
+  mask-composite: intersect;
+}
+/* Opens from the front door outward while the lights come up. */
+.ghh-photo {
+  animation: ghh-reveal 1s var(--ease) 2.2s both;
+}
+@keyframes ghh-reveal {
+  from {
+    clip-path: circle(0% at var(--door-x) var(--door-y));
+    filter: brightness(0.55) saturate(0.6);
+  }
+  to {
+    clip-path: circle(130% at var(--door-x) var(--door-y));
+    filter: brightness(1) saturate(1);
+  }
+}
+.ghh-blend-color {
+  mix-blend-mode: color;
+  opacity: 0.85;
+}
+.ghh-neutralize path {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.ghh-blend-screen {
+  mix-blend-mode: screen;
+}
+.ghh-stop-gold {
+  stop-color: var(--color-gold-hover);
+  stop-opacity: 0.85;
+}
+.ghh-stop-gold0 {
+  stop-color: var(--color-gold);
+  stop-opacity: 0;
+}
+.ghh-windows {
+  opacity: 0.5;
+}
+.ghh-breathe {
+  animation: ghh-breathe 4s ease-in-out 4.5s infinite alternate;
+}
+@keyframes ghh-breathe {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.85;
+  }
+}
+/* Dark, soft patch over the photo's car until the moving car has parked. */
+.ghh-patch {
+  opacity: 0;
+  filter: blur(7px);
+  animation: ghh-patch 1.6s linear 2.2s both;
+}
+.ghh-patch-shape {
+  background: color-mix(in srgb, var(--color-frost) 88%, var(--color-night));
+}
+@keyframes ghh-patch {
+  0%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* L1b: the car arrives from ~70px right (8% of the box) and settles with a small bounce. */
+.ghh-car {
+  animation: ghh-car 1s var(--ease) 2.8s both;
+}
+@keyframes ghh-car {
+  0% {
+    transform: translateX(8%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateX(-0.4%);
+    animation-timing-function: ease-in-out;
+  }
+  86% {
+    transform: translateX(0.12%);
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+.ghh-flare {
+  position: absolute;
+  width: 8%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-gold-hover) 85%, transparent), color-mix(in srgb, var(--color-gold) 28%, transparent) 45%, transparent);
+  mix-blend-mode: screen;
+  opacity: 0.3;
+  animation: ghh-flare 0.3s ease-out 3.55s both;
+}
+@keyframes ghh-flare {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0.3;
+    transform: none;
+  }
+}
+
+/* L2: glass panes, one light sweep, then a thin idle sweep every ~8s. */
+.ghh-pane {
+  fill: var(--color-accent);
+  fill-opacity: 0.1;
+}
+.ghh-glint-line {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.3;
+  stroke-width: 1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.ghh-panels {
+  opacity: 0.35;
+  animation: ghh-from-full 1s var(--ease) 3.2s both;
+}
+@keyframes ghh-from-full {
+  from {
+    opacity: 1;
+  }
+}
+.ghh-stop-white {
+  stop-color: #fff;
+  stop-opacity: 0.5;
+}
+.ghh-stop-white0 {
+  stop-color: #fff;
+  stop-opacity: 0;
+}
+.ghh-sweep,
+.ghh-sweep-idle {
+  opacity: 0;
+  transform: skewX(-20deg);
+}
+.ghh-sweep {
+  animation: ghh-sweep 0.8s ease-in-out 1.9s both;
+}
+@keyframes ghh-sweep {
+  0% {
+    transform: skewX(-20deg) translateX(0);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: skewX(-20deg) translateX(820px);
+    opacity: 0;
+  }
+}
+.ghh-sweep-idle {
+  animation: ghh-sweep-idle 8s ease-in-out 6.5s infinite;
+}
+@keyframes ghh-sweep-idle {
+  0% {
+    transform: skewX(-20deg) translateX(0);
+    opacity: 0;
+  }
+  2%,
+  12% {
+    opacity: 0.6;
+  }
+  14%,
+  100% {
+    transform: skewX(-20deg) translateX(820px);
+    opacity: 0;
+  }
+}
+
+/* L3: cyan line drawing; inner details fade out, main outlines stay as a thin neon edge. */
+.ghh-lines path,
+.ghh-lines ellipse {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.ghh .ghh-draw {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+  animation: ghh-draw var(--t, 0.5s) var(--ease) var(--d, 0s) both;
+}
+@keyframes ghh-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+.ghh-dot-fill {
+  fill: var(--color-accent-pale);
+}
+.ghh-grid {
+  opacity: 0;
+  animation: ghh-grid 3.2s linear both;
+}
+@keyframes ghh-grid {
+  0% {
+    opacity: 0;
+  }
+  16%,
+  70% {
+    opacity: 0.07;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.ghh-faint {
+  opacity: 0.55;
+}
+.ghh-main {
+  opacity: 0.45;
+  animation: ghh-from-full 1s var(--ease) 3.2s both;
+}
+.ghh-detail {
+  opacity: 0;
+  animation: ghh-from-full 1s var(--ease) 3.2s both;
+}
+
+/* L4: dashed glass capsule, USDC → escrow lock → title check. */
+.ghh-mask-stroke {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 8;
+}
+.ghh-capsule-shape {
+  fill: color-mix(in srgb, var(--color-night) 72%, transparent);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+.ghh-connector {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-opacity: 0.55;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.ghh-link {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.35);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+.ghh-chip-circle {
+  fill: var(--color-night);
+  stroke: var(--color-accent);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+.ghh-chip-circle.ghh-ok {
+  stroke: var(--color-ok);
+}
+.ghh-dollar {
+  fill: var(--color-accent);
+  font-family: var(--font-jakarta), sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+}
+.ghh-icon-stroke {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ghh-icon-stroke.ghh-lock-body {
+  fill: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+.ghh-check {
+  fill: none;
+  stroke: var(--color-ok);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ghh .ghh-fade {
+  animation: ghh-fade var(--t, 0.4s) ease-out var(--d, 0s) both;
+}
+@keyframes ghh-fade {
+  from {
+    opacity: 0;
+  }
+}
+.ghh .ghh-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ghh-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) both;
+}
+@keyframes ghh-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.ghh-money {
+  fill: var(--color-accent-pale);
+  opacity: 0;
+  animation: ghh-money 0.7s ease-in-out 4s both;
+}
+@keyframes ghh-money {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  42% {
+    transform: translateX(34px);
+    opacity: 0;
+  }
+  55% {
+    transform: translateX(70px);
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+  92% {
+    transform: translateX(104px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(104px);
+    opacity: 0;
+  }
+}
+/* The capsule is drawn in photo pixels; on phones it gets a little larger to stay legible. */
+@media (max-width: 639px) {
+  .ghh-capsule-g {
+    transform-box: view-box;
+    transform-origin: 465px 62px;
+    transform: scale(1.45);
+  }
+}
+
+/* Off-screen or hidden tab: the idle loops wait. */
+.ghh[data-paused="true"] .ghh-idle {
+  animation-play-state: paused;
+}
+
+/* Hero chips: appear one by one once the drawing is done (--cd), then float on large screens. */
+@keyframes gh-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.hero-chip {
+  animation: gh-chip-in 500ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--cd, 4.6s) both;
+}
+@media (min-width: 1024px) {
+  .hero-chip {
+    animation:
+      gh-chip-in 500ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--cd, 4.6s) both,
+      gh-bob 6s ease-in-out calc(var(--cd, 4.6s) + 600ms) infinite;
+  }
+}
+
+/* ---------------------------------------------------------------- motion */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* One coordinated entrance for the hero: text first, image 120ms later. */
+@keyframes gh-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-enter {
+  animation: gh-rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-enter-late {
+  animation-delay: 120ms;
+}
+
+/* Modal entrance. */
+@keyframes gh-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.gh-dialog[open],
+.gh-toast {
+  animation: gh-pop 160ms ease-out both;
+}
+
+/* Hero chips drift a few pixels up and down. */
+@keyframes gh-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Page content fades in on navigation (template.tsx). Turned off below for reduced motion. */
+@keyframes gh-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-fade {
+  animation: gh-fade 150ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

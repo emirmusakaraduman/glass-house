@@ -1,8 +1,107 @@
 {
   "cluster": "devnet",
   "programId": "HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2",
-  "usdcMint": null,
-  "wallets": {},
-  "pools": {},
-  "updatedAt": null
+  "usdcMint": "8KPWZb15PSYmW7vpE66dSGxNGaEQ21JXGSd7QmwLxPuW",
+  "wallets": {
+    "investorA": {
+      "pubkey": "6T2ofLr889XcyHJymKascaPSBW7S5bPchL91LuB49rpt",
+      "usdc": "8hWXayXnVqpU4YQPDzzgY6gNrTKgcfgdY4Wg82eVeTbV"
+    },
+    "investorB": {
+      "pubkey": "RvmBVBofQb3R94HVpbpF6XRxNmLv1V43SKiLkapz1YB",
+      "usdc": "kSTGL3rqeFSQXAYZuYyRMwWEuT8ZwsvmK6UyW9YXBXg"
+    },
+    "borrowerMaria": {
+      "pubkey": "2todvpYQXTVzFdxANQbW3zGF14UQPrEDEXViS6NWUe5C",
+      "usdc": "J7ameBtmNFDUuJZvJBXpyGngRAaf9fjcNdBdHBScQCc6"
+    },
+    "borrowerDiego": {
+      "pubkey": "2HWvhMf8jiZJatHPMQ6DZB9uxfo6VWDpFXH3oF78LLtb",
+      "usdc": "FHyUZGkZbus3TUTYf97ud47ZVpivUCaQx5kZkxioxUc1"
+    },
+    "seller": {
+      "pubkey": "BfCgP1SJJVnABmF7AYtYfdqW9Cbj74aP8fEKeUmtwMZU",
+      "usdc": "HPTvkEqNaKTDdshrXBbCp2HZJFyh7Hfs6RNq3bUscMeE"
+    },
+    "underwriter": {
+      "pubkey": "3CxFsfm7BbKygd2zRDyh3SWdys1JruKso2unW9Jk5hC1",
+      "usdc": "EyU7DysCYywKzfDX2iiEW1o3fwBxLN9gX2K5VUGQ9Lkr"
+    },
+    "titleAgent": {
+      "pubkey": "8mVVAFi1FUr7mD7gb8iFWDvCspnKeewymsMdRrbyqoCj",
+      "usdc": "3ugwKN6LbPTocPYRXzA4UvG4nzyvghgRR5ccvG6g7aCD"
+    },
+    "platform": {
+      "pubkey": "D8Y9f9Sb98FVtRgWvvzmpRJQLQPcFCW2zqDsH9XMaHpP",
+      "usdc": "H2Cg6a3FruSjd1WqnPDeUjucU75E4ZYgus9uDxmLtAr6"
+    },
+    "recoveryAgent": {
+      "pubkey": "6cCoEeT9q1hMDGjUZCZ1UzYQEMrVu1nHnQph3YSbUwdL",
+      "usdc": "6RdwU6A1gATrcK2TSuZo2ynMnxX4geYjwXjU8m2LFdWD"
+    },
+    "crank": {
+      "pubkey": "62WRLyZi8McS6Npd9udxUahVqCwkbCrtn7Z6sNmw2dYB",
+      "usdc": "4MwaBsYyEJjPhLMJK3qpqTMNiyJjjX2yTW9rP4fFUgfG"
+    }
+  },
+  "pools": {
+    "house": {
+      "poolId": 1,
+      "admin": "D8Y9f9Sb98FVtRgWvvzmpRJQLQPcFCW2zqDsH9XMaHpP",
+      "pool": "3rbdkVxXQfZmXMWn1dVXZ5hPE2ToWrvA5USH4EwsxZPz",
+      "vault": "GJEvwTKT4djhwctdapNvjEqZY21BLYjEN8ChgWfr96w",
+      "firstLossVault": "HMDHnBHBY4hN2YtDJZwnNA6a14eWfoJ3SohmVkHm51X",
+      "reserveVault": "GwCpBnjhftESNEppC99FTbJbWkYuouSsFidaVhdr82LZ",
+      "shareMint": "7pezAMhDxE8HnQryJ9xAh8wBPNPKyFE717LyDnXqijKX",
+      "platformTreasury": "H2Cg6a3FruSjd1WqnPDeUjucU75E4ZYgus9uDxmLtAr6",
+      "assetType": "house",
+      "minFirstLossBps": 500,
+      "brakeReserveBps": 25,
+      "maxLtvBps": 7000,
+      "rateBps": 700,
+      "termMonths": 240,
+      "recoveryCoeffBps": 6300,
+      "periodSeconds": 60,
+      "graceSeconds": 10
+    },
+    "vehicle": {
+      "poolId": 2,
+      "admin": "D8Y9f9Sb98FVtRgWvvzmpRJQLQPcFCW2zqDsH9XMaHpP",
+      "pool": "Ef1qTy79zdLTSxNaTm5Bb4Lb82SyoqnWREDu6JDVzu6m",
+      "vault": "FcA2Qz7dcFYbSKRiri4gt9nKxPeihdskMmdPyhdX3CpB",
+      "firstLossVault": "G1MsCkwhZtFjEDwNN7beYG5bEA11rY3wNz5yKXxGstgV",
+      "reserveVault": "5An2DFsaBEceHXtZFVJee9VCrGuYXej2t2eC9Q2jUkF5",
+      "shareMint": "BQDWUTvgUDaiZod2ykgEwfqTR8v7y2MbzEdmnHUbL4v3",
+      "platformTreasury": "H2Cg6a3FruSjd1WqnPDeUjucU75E4ZYgus9uDxmLtAr6",
+      "assetType": "vehicle",
+      "minFirstLossBps": 500,
+      "brakeReserveBps": 25,
+      "maxLtvBps": 6000,
+      "rateBps": 900,
+      "termMonths": 60,
+      "recoveryCoeffBps": 5400,
+      "periodSeconds": 60,
+      "graceSeconds": 10
+    },
+    "crisis2008": {
+      "poolId": 3,
+      "admin": "D8Y9f9Sb98FVtRgWvvzmpRJQLQPcFCW2zqDsH9XMaHpP",
+      "pool": "UxTZByA1aGi274xMYSVdozVnzKdcbdEwYJ75saXRgiq",
+      "vault": "5bMiMohiaRQy9YWuNrXqRgF8GawtWAfANzEymM2AczVj",
+      "firstLossVault": "2rQK8y8RyU9FXAiEALZ9z4XgcXj2VUzrdMe4Rfsg6iwC",
+      "reserveVault": "4ULNNKmVgzX4Cwxje3SL4ui1cDtpG43eB7cRKJ6uMyVw",
+      "shareMint": "CGKaduBtNbxVwhTKDeT2nAjC2hBXc9Fc4QYFnuEXRheg",
+      "platformTreasury": "H2Cg6a3FruSjd1WqnPDeUjucU75E4ZYgus9uDxmLtAr6",
+      "assetType": "crisis2008",
+      "minFirstLossBps": 0,
+      "brakeReserveBps": 0,
+      "maxLtvBps": 9700,
+      "rateBps": 700,
+      "termMonths": 240,
+      "recoveryCoeffBps": 6300,
+      "periodSeconds": 60,
+      "graceSeconds": 10
+    }
+  },
+  "updatedAt": "2026-11-27T13:28:04.787Z"
 }
