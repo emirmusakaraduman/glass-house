@@ -258,7 +258,7 @@ and an independent audit.
 |---|---|---|
 | Backend A | money flow: pool, deposit, loan lifecycle, math, NAV, deploy | [beratvarlik](https://github.com/beratvarlik) |
 | Backend B | repayment, withdrawals, crank, recovery, risk logic, tests, stress simulation | Emir Musa Karaduman ([emirmusakaraduman](https://github.com/emirmusakaraduman)) |
-| Frontend | app, listing finder, demo | Mustafa Baha Faik |
+| Frontend | app, listing finder, demo | Mustafa Baha Faik ([mustafabahafaik](https://github.com/mustafabahafaik)) |
 
 ## License
 
