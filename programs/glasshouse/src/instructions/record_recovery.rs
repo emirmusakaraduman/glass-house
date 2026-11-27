@@ -13,6 +13,10 @@
 //!    ajanın hesabında kalır (zincir dışında borçluya iade edilir). Alacağı aşan teminat
 //!    CollateralEscrow'da kalır; borçlu `payoff` ile alır.
 //! 5. Kredi Defaulted → Recovered; kalan anapara, karşılık ve gecikme sayaçları kapanır.
+//!
+//! TODO(2of3): Hedef tasarım (PDF v4): satış geliri yalnızca bir escrow PDA'dan CPI ile gelir ve
+//! 2-of-3 imza ister. Bu sürümde: recovery_agent imzalı gerçek transfer + alt sınır altında
+//! `pool.admin` ortak imzası (yukarıdaki 1. madde). README "Known limits" bölümünde yazılı.
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
