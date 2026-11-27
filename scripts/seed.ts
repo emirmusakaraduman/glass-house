@@ -225,12 +225,16 @@ async function retry<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
   throw last;
 }
 
+const isLocalRpc = (rpc: string): boolean => /localhost|127\.0\.0\.1|\[::1\]/.test(rpc);
+
+/**
+ * Explorer linki. Yerel doğrulayıcıda custom URL; diğer her durumda devnet. Özel RPC adresi (API anahtarı
+ * içerebilir) ASLA linke ya da çıktıya yazılmaz.
+ */
 function explorer(rpc: string, addr: string): string {
   const base = `https://explorer.solana.com/address/${addr}`;
-  if (/devnet/i.test(rpc)) return `${base}?cluster=devnet`;
-  if (/testnet/i.test(rpc)) return `${base}?cluster=testnet`;
-  if (/mainnet/i.test(rpc)) return base;
-  return `${base}?cluster=custom&customUrl=${encodeURIComponent(rpc)}`;
+  if (isLocalRpc(rpc)) return `${base}?cluster=custom&customUrl=${encodeURIComponent(rpc)}`;
+  return `${base}?cluster=devnet`;
 }
 
 function readGeneration(): number {
@@ -297,7 +301,7 @@ async function main() {
 
   // ---- 1) mint ----
   const d = readDeployment();
-  d.cluster = rpc;
+  d.cluster = isLocalRpc(rpc) ? "localnet" : "devnet"; // RPC adresi (API anahtarı içerebilir) dosyaya yazılmaz
   let usdcMint: PublicKey;
   if (d.usdcMint && (await conn.getAccountInfo(pk(d.usdcMint)))) {
     usdcMint = pk(d.usdcMint);
@@ -676,7 +680,7 @@ async function main() {
   // ---- 6) çıktı ----
   const out: any = {
     generatedAt: new Date().toISOString(),
-    cluster: rpc,
+    cluster: isLocalRpc(rpc) ? "localnet" : "devnet",
     generation,
     programId: program.programId.toBase58(),
     usdcMint: usdcMint.toBase58(),
@@ -752,6 +756,9 @@ async function main() {
   const json = JSON.stringify(out, null, 2) + "\n";
   if (/\[\s*(\d+\s*,\s*){63}\d+\s*\]/.test(json) || /secret/i.test(json.replace(/Yalnızca PUBLIC[^"]*/, ""))) {
     throw new Error("Çıktıda gizli anahtar olabilir; dosya yazılmadı.");
+  }
+  if (!isLocalRpc(rpc) && (json.includes(rpc) || /api[-_]?key|helius/i.test(json))) {
+    throw new Error("Çıktıda RPC adresi/API anahtarı olabilir; dosya yazılmadı.");
   }
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT_FILE, json);
