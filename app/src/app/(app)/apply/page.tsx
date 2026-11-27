@@ -5,12 +5,15 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarClock,
+  Check,
+  Copy,
   Car,
   ChevronDown,
   CircleCheck,
   FileCheck2,
   Home,
   Landmark,
+  Link2,
   Loader2,
   MapPin,
   ShieldCheck,
@@ -61,6 +64,7 @@ export default function ApplyPage() {
   const [debt, setDebt] = useState(0);
   const [seller, setSeller] = useState("");
   const [created, setCreated] = useState<{ key: string; label: string } | null>(null);
+  const [handoff, setHandoff] = useState<{ link: string; loanKey: string } | null>(null);
   const [step, setStep] = useState(0);
   const [amortOpen, setAmortOpen] = useState(false);
   const action = useAction();
@@ -100,6 +104,8 @@ export default function ApplyPage() {
   const { data: balance } = useChainQuery((c) => c.getWalletBalance(c.actor), [client.actor]);
   const shortOfCash = balance !== null && balance + 1e-6 < cost.cashAtClosing;
   const sellerError = sellerProblem(seller);
+  // Chain mode with a seller on another device: the borrower signs first and shares a link.
+  const remoteSeller = client.mode === "chain" && !!client.prepareApplyLoan && !!seller.trim() && seller.trim() !== client.demoSeller;
 
   const blockers: string[][] = [
     [
@@ -120,7 +126,14 @@ export default function ApplyPage() {
 
   async function submit() {
     const ref = listing ? await listingRefHash(listing) : null;
-    const r = await action.run(() => client.applyLoan({ poolId: type, price, downPayment: down, seller: seller.trim(), region: city, assetRefHash: ref?.hash ?? null }), {
+    const args = { poolId: type, price, downPayment: down, seller: seller.trim(), region: city, assetRefHash: ref?.hash ?? null };
+    if (remoteSeller && client.prepareApplyLoan) {
+      const prepare = client.prepareApplyLoan;
+      const h = await action.run(() => prepare(args).then((x) => ({ ...x, signature: "", mock: false })), { failure: "Link not created" });
+      if (h) setHandoff({ link: `${window.location.origin}/cosign#${h.payload}`, loanKey: h.loanKey });
+      return;
+    }
+    const r = await action.run(() => client.applyLoan(args), {
       success: "Application sent",
       failure: "Application not sent",
     });
@@ -132,6 +145,7 @@ export default function ApplyPage() {
 
   function startOver() {
     setCreated(null);
+    setHandoff(null);
     action.clear();
     setSeller("");
     setStep(0);
@@ -179,6 +193,15 @@ export default function ApplyPage() {
               {action.last ? <TxNote signature={action.last.signature} mock={action.last.mock} /> : null}
             </div>
           </GlassCard>
+        ) : handoff ? (
+          <SellerHandoff
+            link={handoff.link}
+            loanKey={handoff.loanKey}
+            seller={seller.trim()}
+            headingRef={headingRef}
+            onSent={(key, label) => setCreated({ key, label })}
+            onCancelled={() => setHandoff(null)}
+          />
         ) : (
           <GlassCard className="space-y-6">
             <Stepper steps={STEPS} current={step} onStepClick={setStep} />
@@ -332,6 +355,8 @@ export default function ApplyPage() {
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Sending…
                       </>
+                    ) : remoteSeller ? (
+                      "Sign and create the seller's link"
                     ) : (
                       "Sign and send application"
                     )}
@@ -687,5 +712,94 @@ function LoanSummary({
         <p className="text-[12.5px] text-muted">Fee included, not a legal APR.</p>
       </div>
     </div>
+  );
+}
+
+/**
+ * Chain mode, seller on another device: the borrower has signed; the seller opens this link,
+ * checks the terms, signs and sends. This card waits until the loan shows up on chain.
+ */
+function SellerHandoff({
+  link,
+  loanKey,
+  seller,
+  headingRef,
+  onSent,
+  onCancelled,
+}: {
+  link: string;
+  loanKey: string;
+  seller: string;
+  headingRef: React.RefObject<HTMLHeadingElement | null>;
+  onSent: (key: string, label: string) => void;
+  onCancelled: () => void;
+}) {
+  const { client } = useGlassHouse();
+  const [copied, setCopied] = useState(false);
+  const cancel = useAction();
+  const { data: loan } = useChainQuery((c) => c.getLoan(loanKey), [loanKey], 4000);
+
+  useEffect(() => {
+    if (loan) onSent(loan.key, loanLabel(loan));
+  }, [loan, onSent]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <GlassCard variant="glow" className="space-y-5">
+      <div className="flex items-start gap-3">
+        <IconBadge icon={Link2} tone="accent" size="md" />
+        <div>
+          <h2 ref={headingRef} tabIndex={-1} className="title text-xl outline-none">
+            Send this link to the seller
+          </h2>
+          <p className="mt-1 text-muted">
+            You signed the application. It goes on chain when the seller ({shortAddr(seller)}) opens the link, checks the terms and signs with that wallet. Nothing leaves your wallet until then.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="cosign-link" className="text-sm font-semibold">
+          Seller&apos;s link
+        </label>
+        <div className="mt-1.5 flex gap-2">
+          <input id="cosign-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="h-11 min-w-0 flex-1 rounded-[12px] border border-white/12 bg-white/[0.04] px-3 font-mono text-[13px]" />
+          <Button variant="accent" onClick={copy} aria-live="polite">
+            {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </div>
+        <p className="mt-1.5 text-[13px] text-muted">The link doesn&apos;t expire. It stops working once the seller sends it, or if you cancel it below.</p>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-muted" aria-live="polite">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Waiting for the seller to sign…
+      </div>
+
+      <div className="border-t border-white/[0.08] pt-4">
+        <Button
+          variant="quiet"
+          disabled={cancel.pending || !client.cancelCosignLinks}
+          onClick={async () => {
+            const r = await cancel.run(() => client.cancelCosignLinks!(), { success: "Link cancelled", failure: "Link not cancelled" });
+            if (r) onCancelled();
+          }}
+        >
+          Cancel this link
+        </Button>
+        <div className="mt-2">
+          <ErrorText>{cancel.error}</ErrorText>
+        </div>
+      </div>
+    </GlassCard>
   );
 }

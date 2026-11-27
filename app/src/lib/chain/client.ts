@@ -56,8 +56,28 @@ export interface GlassHouseClient {
   crankLoan(loanKey: string): Promise<TxResult & { changed: boolean; message: string }>;
   recordRecovery(loanKey: string, proceeds: number): Promise<TxResult>;
 
+  // Seller on another device (chain mode only). The borrower signs first and gets a link;
+  // the seller opens it, checks the terms, signs and sends. The link doesn't expire (durable
+  // nonce) until it is used or the borrower cancels it.
+  prepareApplyLoan?(args: ApplyLoanArgs): Promise<{ payload: string; loanKey: string }>;
+  cancelCosignLinks?(): Promise<TxResult>;
+  describeCosign?(payload: string): Promise<CosignRequest>;
+  cosignApplyLoan?(payload: string): Promise<TxResult & { loanKey: string }>;
+
   /** Called after any state change so hooks can refetch. */
   subscribe(listener: () => void): () => void;
+}
+
+/** What a co-sign link asks the seller to sign, decoded and checked in the seller's browser. */
+export interface CosignRequest {
+  poolId: PoolId;
+  loanKey: string;
+  price: number;
+  downPayment: number;
+  borrower: string;
+  seller: string;
+  /** Null when the link can still be signed; otherwise why it can't. */
+  problem: string | null;
 }
 
 export class ClientError extends Error {}

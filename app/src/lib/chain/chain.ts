@@ -1,16 +1,27 @@
-import { AnchorError, AnchorProvider, BN, Program } from "@coral-xyz/anchor";
+import { AnchorError, AnchorProvider, BN, BorshInstructionCoder, Program } from "@coral-xyz/anchor";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
   unpackAccount,
 } from "@solana/spl-token";
-import { Connection, Keypair, PublicKey, type AccountMeta } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  NONCE_ACCOUNT_LENGTH,
+  NonceAccount,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionMessage,
+  VersionedTransaction,
+  type AccountMeta,
+} from "@solana/web3.js";
 import idlJson from "../../../public/idl/glasshouse.json";
 import { POOLS } from "../pools";
 import type { InvestorPosition, Loan, PoolId, PoolState, SharePricePoint, TxResult, WithdrawRequest } from "../types";
 import { fromMicro, mapStatus, pdas, toMicro } from "./anchor";
-import { ApplyLoanArgs, ClientError, GlassHouseClient, computeMetrics, loanKey, parseLoanKey } from "./client";
+import { ApplyLoanArgs, ClientError, CosignRequest, GlassHouseClient, computeMetrics, loanKey, parseLoanKey } from "./client";
 import type { Glasshouse } from "./idl/glasshouse";
 
 // GlassHouseClient backed by the deployed program (NEXT_PUBLIC_DATA_SOURCE=chain).
@@ -233,32 +244,212 @@ export class ChainClient implements GlassHouseClient {
     const me = this.me();
     if (!args.seller) throw new ClientError("The seller has to co-sign the application.");
     if (args.seller === this.actor) throw new ClientError("The seller must use a different wallet from the borrower.");
-    // apply_loan needs both signatures. This tab can sign for its demo seller wallet only;
-    // a seller on another device needs a co-sign handoff that isn't built yet.
+    // apply_loan needs both signatures. Here this tab signs for its demo seller wallet; a
+    // seller on another device goes through prepareApplyLoan → co-sign link instead.
     if (args.seller !== this.demoSeller) {
-      throw new ClientError("The seller has to sign in this browser for now. Use the demo seller wallet.");
+      throw new ClientError("A seller on another device signs through a co-sign link.");
     }
+    const { builder, loan, key } = await this.applyBuilder(args, me);
+    const sig = await this.send(builder.signers([this.seller]));
+    // City and listing hash stay in this browser until the underwriter approves.
+    writeJson(noteKey(loan), { region: args.region, assetRefHash: args.assetRefHash } satisfies LocalLoanNote);
+    return { ...sig, loanKey: key };
+  }
+
+  private async applyBuilder(args: ApplyLoanArgs, me: PublicKey) {
     const { pk: pool, raw } = await this.pool(args.poolId);
     const id = BigInt(raw.nextLoanId.toString());
     const loan = this.pda.loan(pool, id);
-    const sig = await this.send(
-      this.program.methods
-        .applyLoan(bn(toMicro(args.price)), bn(toMicro(args.downPayment)))
-        .accountsPartial({
-          borrower: me,
-          seller: this.seller.publicKey,
-          pool,
-          loan,
-          usdcMint: raw.usdcMint,
-          borrowerUsdc: getAssociatedTokenAddressSync(raw.usdcMint, me, true),
-          loanEscrow: this.pda.loanEscrow(loan),
-          collateralEscrow: this.pda.collateral(loan),
-        })
-        .signers([this.seller]),
-    );
-    // City and listing hash stay in this browser until the underwriter approves.
+    const builder = this.program.methods
+      .applyLoan(bn(toMicro(args.price)), bn(toMicro(args.downPayment)))
+      .accountsPartial({
+        borrower: me,
+        seller: new PublicKey(args.seller),
+        pool,
+        loan,
+        usdcMint: raw.usdcMint,
+        borrowerUsdc: getAssociatedTokenAddressSync(raw.usdcMint, me, true),
+        loanEscrow: this.pda.loanEscrow(loan),
+        collateralEscrow: this.pda.collateral(loan),
+      });
+    return { builder, loan, key: loanKey(args.poolId, Number(id)) };
+  }
+
+  // ---------------------------------------------------------------- co-sign link
+
+  /**
+   * Borrower side. Builds apply_loan on the borrower's durable nonce (so the link doesn't
+   * expire after ~1 minute like a normal blockhash), signs it as fee payer and returns the
+   * partly signed transaction for the seller.
+   */
+  async prepareApplyLoan(args: ApplyLoanArgs) {
+    const me = this.me();
+    if (!args.seller) throw new ClientError("Add the seller's wallet address.");
+    if (args.seller === this.actor) throw new ClientError("The seller must use a different wallet from the borrower.");
+    let sellerPk: PublicKey;
+    try {
+      sellerPk = new PublicKey(args.seller);
+    } catch {
+      throw new ClientError("That seller address isn't a valid Solana address.");
+    }
+    if (!PublicKey.isOnCurve(sellerPk.toBytes())) throw new ClientError("The seller address has to be a wallet, not a program account.");
+
+    const nonceAccount = await this.ensureNonce(me);
+    const { builder, loan, key } = await this.applyBuilder(args, me);
+    const applyIx = await builder.instruction();
+    const message = new TransactionMessage({
+      payerKey: me,
+      recentBlockhash: nonceAccount.nonce,
+      instructions: [SystemProgram.nonceAdvance({ noncePubkey: nonceAccount.address, authorizedPubkey: me }), applyIx],
+    }).compileToLegacyMessage();
+    const signed = await this.signWithWallet(new VersionedTransaction(message));
     writeJson(noteKey(loan), { region: args.region, assetRefHash: args.assetRefHash } satisfies LocalLoanNote);
-    return { ...sig, loanKey: loanKey(args.poolId, Number(id)) };
+    return { payload: toBase64Url(signed.serialize()), loanKey: key };
+  }
+
+  /** Borrower side: advancing the nonce makes every link signed so far unusable. */
+  async cancelCosignLinks() {
+    const me = this.me();
+    const noncePk = await nonceAddress(me);
+    if (!(await this.connection.getAccountInfo(noncePk))) throw new ClientError("There is no open co-sign link to cancel.");
+    try {
+      const tx = new Transaction().add(SystemProgram.nonceAdvance({ noncePubkey: noncePk, authorizedPubkey: me }));
+      const signature = await this.program.provider.sendAndConfirm!(tx);
+      this.changed();
+      return { signature, mock: false };
+    } catch (e) {
+      throw toChainError(e);
+    }
+  }
+
+  /**
+   * Seller side, before signing. The link comes from outside, so everything the seller's
+   * wallet would sign is checked here: exactly [nonce advance, apply_loan], the borrower pays
+   * the fees, and the seller signs nothing else.
+   */
+  async describeCosign(payload: string): Promise<CosignRequest> {
+    const tx = decodeCosign(payload);
+    const msg = tx.message;
+    const keys = msg.staticAccountKeys;
+    const ixs = msg.compiledInstructions;
+    const bad = (why: string) => new ClientError(`This link can't be signed: ${why}`);
+    if (ixs.length !== 2) throw bad("it contains other instructions.");
+    const [advance, apply] = ixs;
+
+    const feePayer = keys[0];
+    const advanceData = Buffer.from(advance.data);
+    if (!keys[advance.programIdIndex].equals(SystemProgram.programId) || advanceData.length < 4 || advanceData.readUInt32LE(0) !== 4) {
+      throw bad("it doesn't start with the borrower's nonce.");
+    }
+    const nonceAddr = keys[advance.accountKeyIndexes[0]];
+    if (!keys[advance.accountKeyIndexes[2]].equals(feePayer)) throw bad("the nonce isn't the borrower's.");
+
+    if (!keys[apply.programIdIndex].equals(this.program.programId)) throw bad("it isn't for the GlassHouse program.");
+    const decoded = new BorshInstructionCoder(this.program.idl).decode(Buffer.from(apply.data));
+    if (!decoded || !/^apply_?loan$/i.test(decoded.name)) throw bad("it isn't a loan application.");
+    const data = decoded.data as Record<string, BN>;
+    const acc = (i: number) => keys[apply.accountKeyIndexes[i]];
+    const borrower = acc(0);
+    const seller = acc(1);
+    const poolPk = acc(2);
+    const loanPk = acc(3);
+    if (!borrower.equals(feePayer)) throw bad("the borrower doesn't pay the fees.");
+    if (seller.equals(feePayer)) throw bad("the seller would pay the fees.");
+    // The seller must be a signer only of apply_loan, never of the nonce or as fee payer.
+    const signerKeys = keys.slice(0, msg.header.numRequiredSignatures);
+    if (signerKeys.length !== 2 || !signerKeys.some((k) => k.equals(seller))) throw bad("the signers aren't the borrower and the seller.");
+    if (tx.signatures[0].every((b) => b === 0)) throw bad("the borrower hasn't signed it.");
+
+    const s = await this.snapshot();
+    const pool = [...s.pools.entries()].find(([, p]) => p.pk.equals(poolPk));
+    if (!pool) throw bad("the pool isn't on this network.");
+    const [poolId, poolEntry] = pool;
+    const nextId = BigInt(poolEntry.raw.nextLoanId.toString());
+
+    let problem: string | null = null;
+    const nonceInfo = await this.connection.getAccountInfo(nonceAddr);
+    if (await this.connection.getAccountInfo(loanPk)) problem = "This application was already sent.";
+    else if (!nonceInfo || NonceAccount.fromAccountData(nonceInfo.data).nonce !== msg.recentBlockhash) problem = "The borrower cancelled this link or made a newer one. Ask for a new link.";
+    else if (!this.pda.loan(poolPk, nextId).equals(loanPk)) problem = "Another application was sent first, so this link is out of date. Ask the borrower for a new link.";
+
+    const price = data.price ?? (data as Record<string, BN>)["price"];
+    const down = data.down_payment ?? (data as Record<string, BN>)["downPayment"];
+    return {
+      poolId,
+      loanKey: loanKey(poolId, Number(nextId)),
+      price: fromMicro(price),
+      downPayment: fromMicro(down),
+      borrower: borrower.toBase58(),
+      seller: seller.toBase58(),
+      problem,
+    };
+  }
+
+  /** Seller side: sign with the connected wallet and send. */
+  async cosignApplyLoan(payload: string) {
+    const me = this.me();
+    const req = await this.describeCosign(payload);
+    if (req.problem) throw new ClientError(req.problem);
+    if (req.seller !== me.toBase58()) throw new ClientError(`This link is for the seller wallet ${req.seller.slice(0, 4)}…${req.seller.slice(-4)}. Connect that wallet.`);
+    try {
+      const signed = await this.signWithWallet(decodeCosign(payload));
+      const signature = await this.connection.sendRawTransaction(signed.serialize());
+      await this.waitFor(signature);
+      this.changed();
+      return { signature, mock: false, loanKey: req.loanKey };
+    } catch (e) {
+      throw toChainError(e);
+    }
+  }
+
+  private async signWithWallet(tx: VersionedTransaction) {
+    if (!this.wallet) throw new ClientError("Connect a wallet to sign this transaction.");
+    try {
+      return await this.wallet.signTransaction(tx);
+    } catch (e) {
+      throw toChainError(e);
+    }
+  }
+
+  /** The borrower's nonce account (address derived from the wallet), created on first use. */
+  private async ensureNonce(me: PublicKey) {
+    const address = await nonceAddress(me);
+    let info = await this.connection.getAccountInfo(address);
+    if (!info) {
+      const lamports = await this.connection.getMinimumBalanceForRentExemption(NONCE_ACCOUNT_LENGTH);
+      const tx = new Transaction().add(
+        SystemProgram.createAccountWithSeed({
+          fromPubkey: me,
+          newAccountPubkey: address,
+          basePubkey: me,
+          seed: NONCE_SEED,
+          lamports,
+          space: NONCE_ACCOUNT_LENGTH,
+          programId: SystemProgram.programId,
+        }),
+        SystemProgram.nonceInitialize({ noncePubkey: address, authorizedPubkey: me }),
+      );
+      try {
+        await this.program.provider.sendAndConfirm!(tx);
+      } catch (e) {
+        throw toChainError(e);
+      }
+      info = await this.connection.getAccountInfo(address);
+      if (!info) throw new ClientError("Couldn't set up the co-sign link. Try again.");
+    }
+    return { address, nonce: NonceAccount.fromAccountData(info.data).nonce };
+  }
+
+  /** Nonce transactions have no blockhash expiry, so confirmation is a plain status poll. */
+  private async waitFor(signature: string) {
+    for (let i = 0; i < 60; i++) {
+      const { value } = await this.connection.getSignatureStatuses([signature]);
+      const st = value[0];
+      if (st?.err) throw new ClientError(`The transaction failed: ${JSON.stringify(st.err)}`);
+      if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) return;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    throw new ClientError("Sent, but not confirmed after a minute. Check Explorer before trying again.");
   }
 
   async approveLoan(key: string, appraisal: number, docHash: string) {
@@ -628,6 +819,30 @@ function toChainError(e: unknown): Error {
     return new ChainError(`${known?.msg ?? known?.name ?? "Program error"} (${code})`, code);
   }
   return new ClientError(msg);
+}
+
+// ---------------------------------------------------------------- co-sign link encoding
+
+const NONCE_SEED = "glasshouse-cosign";
+
+function nonceAddress(owner: PublicKey) {
+  return PublicKey.createWithSeed(owner, NONCE_SEED, SystemProgram.programId);
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+  let s = "";
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function decodeCosign(payload: string): VersionedTransaction {
+  try {
+    const b64 = payload.trim().replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64 + "=".repeat((4 - (b64.length % 4)) % 4));
+    return VersionedTransaction.deserialize(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  } catch {
+    throw new ClientError("This link is damaged. Ask the borrower to send it again.");
+  }
 }
 
 // ---------------------------------------------------------------- small helpers
