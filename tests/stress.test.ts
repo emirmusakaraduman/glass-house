@@ -9,7 +9,7 @@
 // Düzeltmeden sonra (Loan.reserved[8..16] interest_settled) toplam zarar kılavuzla ±5 USD uyumludur.
 
 import { expect } from "chai";
-import { MATRIX, runAll, runScenario, ScenarioDetail, ScenarioRow } from "./lib/stressSim";
+import { BreakEven, MATRIX, runAll, runScenario, ScenarioDetail, ScenarioRow, VEHICLE_MATRIX } from "./lib/stressSim";
 import { buildNotes, EXPECTED } from "./lib/stressNotes";
 
 /** Late2'de teminattan kesilen taksidin faizinin yedek fona giren payı (%0,5 / %7 × 408,33 × 20 kredi). */
@@ -21,16 +21,18 @@ describe("stres simülasyonu (100 kredi, 20 temerrüt)", function () {
 
   let rows: ScenarioRow[];
   let details: ScenarioDetail[];
-  const find = (pool: string, cost: number, drop: number) =>
-    rows.find((r) => r.pool === pool && r.costPct === cost && r.dropPct === drop)!;
+  let breakEven: BreakEven[];
+  const find = (pool: string, cost: number, drop: number, defaults = 20) =>
+    rows.find((r) => r.pool === pool && r.costPct === cost && r.dropPct === drop && r.defaults === defaults)!;
 
   before(async () => {
-    ({ rows, details } = await runAll());
+    ({ rows, details, breakEven } = await runAll());
   });
 
-  it("12 senaryo üretir; JSON alanları şemayla birebir", () => {
-    expect(rows).to.have.length(12);
+  it("27 senaryo üretir (ev 6, 2008 6, araç 9, 30 temerrüt 6); JSON alanları şemayla birebir", () => {
+    expect(rows).to.have.length(27);
     expect(MATRIX).to.have.length(6);
+    expect(VEHICLE_MATRIX).to.have.length(9);
     for (const r of rows) {
       expect(Object.keys(r)).to.deep.equal([
         "pool",
@@ -45,10 +47,10 @@ describe("stres simülasyonu (100 kredi, 20 temerrüt)", function () {
         "investorLoss",
         "investorLossPct",
       ]);
-      expect(r.defaults).to.equal(DEFAULTS);
+      expect([20, 30]).to.include(r.defaults);
       expect(r.seniorSharePriceBefore).to.equal(1);
     }
-    expect(buildNotes(rows, details).length).to.be.greaterThan(5);
+    expect(buildNotes(rows, details, breakEven).length).to.be.greaterThan(8);
   });
 
   it("ev, masraf %10 / düşüş %30: yatırımcıya 0; toplam zarar kılavuzla (229.937) ±5 USD uyumlu", () => {
@@ -106,6 +108,42 @@ describe("stres simülasyonu (100 kredi, 20 temerrüt)", function () {
   it("ev havuzunda %30 düşüşte pay fiyatı düşmez (faiz alacağı kasa/yedekle karşılanır); %40'ta yatırımcı zararı vardır", () => {
     expect(find("house", 10, 30).seniorSharePriceAfter).to.be.greaterThan(1);
     expect(find("house", 20, 40).investorLoss).to.be.greaterThan(find("house", 10, 40).investorLoss);
+  });
+
+  it("araç havuzu (tahmin, masraf %10): %30'da zarar yok, %40'ta kasa yer, %50'de yatırımcıya ≈ 5.7k USD (kılavuz 6.054)", () => {
+    const r30 = find("vehicle", 10, 30);
+    const r40 = find("vehicle", 10, 40);
+    const r50 = find("vehicle", 10, 50);
+    expect(r30.investorLoss).to.equal(0);
+    expect(r40.investorLoss).to.equal(0);
+    expect(r40.totalLoss).to.be.closeTo(36_054, 300); // kılavuz tablosu
+    expect(r50.totalLoss).to.be.closeTo(72_054, 300);
+    expect(r50.investorLoss).to.be.closeTo(6_054, 500);
+    // Kasa 60.000 + yedek 6.000 (+ Late2 faiz payı) %50'de tükenir.
+    expect(r50.firstLossAndReserveUsed).to.be.closeTo(66_100, 1);
+    // Araç havuzu ev havuzundan bağımsız kurulur; pay fiyatı 1,0'dan başlar.
+    expect(r50.seniorSharePriceBefore).to.equal(1);
+  });
+
+  it("30 temerrüt, ev %40 düşüş: kılavuz 614.906 USD zarar; yatırımcıya ≈ 229.9k (yedeğe giren faiz payı kadar eksik)", () => {
+    const r = find("house", 10, 40, 30);
+    expect(r.defaults).to.equal(30);
+    expect(r.totalLoss).to.be.closeTo(614_906, 5);
+    expect(r.investorLoss).to.be.closeTo(229_906 - 875, 15);
+  });
+
+  it("kırılma noktaları kılavuzla uyumlu: ev %38,6 / %35,0 / %30,9; araç ≈ %48 / %45 / %42", () => {
+    const be = (pool: string, cost: number) => breakEven.find((b) => b.pool === pool && b.costPct === cost)!.dropPct;
+    expect(be("house", 10)).to.be.closeTo(38.6, 0.3);
+    expect(be("house", 15)).to.be.closeTo(35.0, 0.3);
+    expect(be("house", 20)).to.be.closeTo(30.9, 0.3);
+    expect(be("vehicle", 10)).to.be.closeTo(48, 0.6);
+    expect(be("vehicle", 15)).to.be.closeTo(45, 0.6);
+    expect(be("vehicle", 20)).to.be.closeTo(42, 0.6);
+    // Masraf arttıkça kırılma noktası düşer.
+    for (const pool of ["house", "vehicle"]) {
+      expect(be(pool, 10) > be(pool, 15) && be(pool, 15) > be(pool, 20)).to.equal(true);
+    }
   });
 
   it("tek senaryo bağımsız çalışır ve belirleyicidir (aynı girdi → aynı sonuç)", async () => {

@@ -1,7 +1,7 @@
 // scripts/out/stress.json `notes[]` metinleri. Rakamlar sonuçlardan hesaplanır; sabit metin yalnızca
 // yöntem ve tanımları anlatır. Frontend bu dizeleri olduğu gibi gösterebilir.
 
-import type { ScenarioDetail, ScenarioRow } from "./stressSim";
+import type { BreakEven, ScenarioDetail, ScenarioRow } from "./stressSim";
 
 /** Beklenen kontrol rakamları (kılavuz): ev havuzu, 20 temerrüt. */
 export const EXPECTED = {
@@ -14,9 +14,9 @@ export const EXPECTED = {
 const fmt = (v: number): string => v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 const pct = (v: number, d = 1): string => `%${v.toFixed(d).replace(".", ",")}`;
 
-export function buildNotes(rows: ScenarioRow[], details: ScenarioDetail[]): string[] {
-  const idx = (pool: string, cost: number, drop: number) =>
-    rows.findIndex((r) => r.pool === pool && r.costPct === cost && r.dropPct === drop);
+export function buildNotes(rows: ScenarioRow[], details: ScenarioDetail[], breakEven: BreakEven[] = []): string[] {
+  const idx = (pool: string, cost: number, drop: number, defaults = 20) =>
+    rows.findIndex((r) => r.pool === pool && r.costPct === cost && r.dropPct === drop && r.defaults === defaults);
   const h = idx("house", 10, 30);
   const h40 = idx("house", 10, 40);
   const c08 = idx("2008", 10, 30);
@@ -46,5 +46,38 @@ export function buildNotes(rows: ScenarioRow[], details: ScenarioDetail[]): stri
     `2008 modu kılavuz karşılaştırması: kılavuz (%30 düşüş, masraf %10) kredi başına ≈ 42.488, toplam ≈ 849.750 USD zarar verir; ölçülen ${fmt(r08.totalLoss)} USD. Fark ≈ ${fmt(849_750 - r08.totalLoss)} USD = 20 kredi × borçlunun ≈ 3 taksitlik teminatı: kılavuz bu hesapta teminatı saymaz, program 2008 modunda da teminatı (apply_loan'da zorunlu) zarardan düşer.`,
     `hesaplama (programda YOK): 30x kaldıraçlı bir bankanın özkaynağı varlıklarının 1/${leverage} = ${pct(equityPct, 2)}'idir; bu orandan büyük bir portföy zararı özkaynağı sıfırlar. Bu simülasyonda portföy zararı: ev havuzu ${pct(lossRateHouse, 2)} (${fmt(rh.totalLoss)} / ${fmt(dh.portfolioPrincipal)}), 2008 modu ${pct(lossRate08, 2)} (${fmt(r08.totalLoss)} / ${fmt(d08.portfolioPrincipal)}) — masraf %10, düşüş %30. Yani 30x kaldıraçlı banka ev havuzu senaryosunda özkaynağının tamamına yakınını, 2008 modunda ise ${(lossRate08 / equityPct).toFixed(1).replace(".", ",")} katını kaybeder. GlassHouse'ta kaldıraç yoktur: yatırımcı sermayesi kredilerin tamamını finanse eder ve zarar önce ilk zarar kasası ve yedek fonla karşılanır.`,
     "Satış geliri değerin %50'sinin (min_recovery_bps) altında kalan kurtarmalar ikinci imza (admin) gerektirir; simülasyon bunları admin ortak imzasıyla işler (masraf %20 ve düşüş %40 için satış 48.000 < 50.000 USD).",
+    ...vehicleNotes(rows, breakEven),
   ];
+}
+
+const bePct = (v: number): string => `%${v.toFixed(1).replace(".", ",")}`;
+
+/** Araç havuzu, 30 temerrüt ve kırılma noktası notları. */
+function vehicleNotes(rows: ScenarioRow[], breakEven: BreakEven[]): string[] {
+  const out: string[] = [];
+  const v = rows.filter((r) => r.pool === "vehicle" && r.defaults === 20);
+  if (v.length) {
+    const r = v.find((x) => x.costPct === 10 && x.dropPct === 50);
+    out.push(
+      "Araç havuzu (pool = \"vehicle\") bir TAHMİNDİR: 100 kredi × 12.000 USD (araç 20.000), ilk zarar kasası 60.000, yedek 6.000, katsayı 0,54. Hasar, çalınma, taşınabilirlik ve ikinci el iskontosu modellenmedi; kırılma noktası iddia edilmez. Kılavuzun araç tablosundan küçük farklar vardır (masraf %10: düşüş %40'ta toplam zarar ≈ 35.807 / kılavuz 36.054, düşüş %50'de yatırımcıya ≈ 5.707 / kılavuz 6.054): kılavuz alacağı tam anaparanın 15 aylık faiziyle hesaplar, program Late2'de teminattan ödenen anaparayı ve faizi düşer." +
+        (r ? ` Masraf %10, düşüş %50'de toplam zarar ${Math.round(r.totalLoss).toLocaleString("en-US")} USD, yatırımcıya ${Math.round(r.investorLoss).toLocaleString("en-US")} USD.` : ""),
+    );
+  }
+  const d30 = rows.filter((r) => r.defaults === 30);
+  if (d30.length) {
+    out.push(
+      "30 temerrüt senaryoları (defaults = 30): ev için düşüş %40, araç için %50 ve masraf %10/%15/%20. Aynı pool, costPct ve dropPct ile iki satır olabilir; defaults alanına göre ayırın.",
+    );
+  }
+  if (breakEven.length) {
+    const fmtBe = (pool: string) =>
+      breakEven
+        .filter((b) => b.pool === pool)
+        .map((b) => `masraf %${b.costPct}: ${bePct(b.dropPct)}`)
+        .join(", ");
+    out.push(
+      `Kırılma noktası (yatırımcının zarar görmeye başladığı fiyat düşüşü, 20 temerrüt, zincirde ikiye bölmeyle ölçüldü): ev ${fmtBe("house")}; araç (tahmin) ${fmtBe("vehicle")}. Kılavuz: ev ≈ %38,6 / %35,0 / %30,9, araç ≈ %48 / %45 / %42; fark Late2 kesintilerinden yedek fona giren faiz payından gelir.`,
+    );
+  }
+  return out;
 }
