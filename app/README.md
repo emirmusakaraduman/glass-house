@@ -69,6 +69,38 @@ it, withdrawals and refunds go back in. State lives in memory: a full page reloa
 
 The screens don't change.
 
+## Deploy (Netlify)
+
+1. New site from the GitHub repository. **Base directory: `app`.** Build settings come from
+   [`netlify.toml`](netlify.toml) (`npm run build`, publish `.next`, Node 22). Netlify adds its
+   Next.js runtime by itself; no plugin to install.
+2. Add the environment variables below under Site configuration → Environment variables.
+   `NEXT_PUBLIC_*` values are baked into the build, so redeploy after changing any of them.
+3. Deploy, then set `NEXT_PUBLIC_SITE_URL` to the site's address and deploy once more.
+
+The addresses are public devnet accounts from `deployments/devnet.json`.
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_DATA_SOURCE` | `chain` (or `mock` for in-memory demo data) |
+| `NEXT_PUBLIC_SOLANA_CLUSTER` | `devnet` |
+| `NEXT_PUBLIC_RPC_URL` | `https://api.devnet.solana.com` |
+| `NEXT_PUBLIC_PROGRAM_ID` | `HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2` |
+| `NEXT_PUBLIC_USDC_MINT` | `8KPWZb15PSYmW7vpE66dSGxNGaEQ21JXGSd7QmwLxPuW` |
+| `NEXT_PUBLIC_HOUSE_POOL` | `3rbdkVxXQfZmXMWn1dVXZ5hPE2ToWrvA5USH4EwsxZPz` |
+| `NEXT_PUBLIC_VEHICLE_POOL` | `Ef1qTy79zdLTSxNaTm5Bb4Lb82SyoqnWREDu6JDVzu6m` |
+| `NEXT_PUBLIC_SITE_URL` | the site's own address, e.g. `https://<site>.netlify.app` |
+| `FIRECRAWL_API_KEY` | secret, set in Netlify only; never in the repo |
+| `FIRECRAWL_HOUSE_URLS` | empty: no listing site we checked allows scraping |
+| `FIRECRAWL_VEHICLE_URLS` | empty, same reason |
+| `FIRECRAWL_LIVE` | `on` |
+| `FIRECRAWL_LIVE_CITIES` | `Panama City` |
+| `FIRECRAWL_TIMEOUT_MS` | `8000` (Netlify functions stop at 10 s; after this the finder shows sample data) |
+
+`NEXT_PUBLIC_RPC_URL` is sent to every browser, so never put an RPC URL that contains an API key
+there. With both Firecrawl URL lists empty the finder never calls Firecrawl and always shows
+**Sample data**.
+
 ## İlan Bulucu (Firecrawl) and privacy
 
 - `GET /api/listings?type=house|vehicle&city=…&maxPrice=…` in `src/app/api/listings/route.ts`.

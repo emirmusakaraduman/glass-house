@@ -16,8 +16,8 @@ Scriptler varsayılan olarak dry-run'dır; zincire yalnızca `--execute` ile yaz
    (`.gitignore`'da, repoya girmez).
 4. **Hangi binary gider:** `npm run build` çıktısı `target/deploy/glasshouse.so`
    (Solana **4.4.1**, `--arch v0`, ELF e_flags `0x0` = SBPF v0; 6 gövdenin hepsi dahil).
-   Üç test takımı bu binary'ye karşı geçti: 50 Rust, 46 LiteSVM, 63 yerel-validator.
-   Boyut 690.128 bayt, sha256 `fce6cadfcee51e66ebab5b12a66b16da14dd6935ef28314d5a79596abfafe24a`
+   Üç test takımı bu binary'ye karşı geçti: 51 Rust, 143 LiteSVM, 63 yerel-validator.
+   Boyut 689.656 bayt, sha256 `2172fb2910b78fd2b6a8e8eb63cf57614c98c7bf99b567b0050d2d1284eb5571`
    (yeniden derlenirse değişir; deploy öncesi tekrar doğrula). Deploy sonrası
    `solana program dump <id> dump.so --url devnet` ile çekip sha256'yı karşılaştır.
 

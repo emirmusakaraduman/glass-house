@@ -183,8 +183,8 @@ test inside WSL2. The program is built as **SBPF v0** (`--arch v0`, required by 
 ```bash
 npm ci
 npm run build              # program (SBPF v0) + IDL
-cargo test --lib           # 50 Rust unit tests (math, nav, parameter bounds, lifecycle, waterfall)
-npm test                   # 143 LiteSVM tests (pool, deposit, loan flow, repay, payoff, crank, recovery, withdrawals, invariants, stress)
+cargo test --lib           # 51 Rust unit tests (math, nav, parameter bounds, lifecycle, waterfall)
+npm test                   # 143 LiteSVM tests (pools, deposits, loan flow, repay, payoff, crank, recovery, withdrawals, invariants, authority, stress simulation)
 npm run test:localnet      # 63 integration tests on a local validator (pools, loan lifecycle, stress of rules)
 ```
 
