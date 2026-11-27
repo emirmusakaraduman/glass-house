@@ -1148,3 +1148,127 @@ svg.ghh-layer {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------- /stress crash simulation */
+/* Loans in the city grid: state is a data attribute, colors are tokens, changes fade in 250ms. */
+.gh-loan .gh-loan-body,
+.gh-loan .gh-loan-wheels {
+  fill: rgb(0 210 255 / 0.16);
+  stroke: var(--color-accent);
+  transition: fill 250ms ease, stroke 250ms ease;
+}
+.gh-loan .gh-loan-wheels { fill: var(--color-accent); stroke: none; }
+.gh-loan { transition: opacity 300ms ease; }
+.gh-loan .gh-loan-warn,
+.gh-loan .gh-loan-sold { opacity: 0; transition: opacity 250ms ease; }
+.gh-loan .gh-loan-warn { fill: var(--color-warn); }
+.gh-loan[data-s="late1"] .gh-loan-body,
+.gh-loan[data-s="late2"] .gh-loan-body { fill: rgb(251 146 60 / 0.2); stroke: var(--color-warn); }
+.gh-loan[data-s="late1"] .gh-loan-wheels,
+.gh-loan[data-s="late2"] .gh-loan-wheels { fill: var(--color-warn); }
+.gh-loan[data-s="late1"] .gh-loan-warn,
+.gh-loan[data-s="late2"] .gh-loan-warn { opacity: 1; }
+.gh-loan[data-s="late2"] .gh-loan-body { fill: rgb(251 146 60 / 0.38); }
+.gh-loan[data-s="defaulted"] .gh-loan-body { fill: rgb(244 63 94 / 0.4); stroke: var(--color-bad); }
+.gh-loan[data-s="defaulted"] .gh-loan-wheels { fill: var(--color-bad); }
+.gh-loan[data-s="defaulted"] { animation: gh-throb 700ms ease-in-out infinite alternate; }
+.gh-loan[data-s="sold"] .gh-loan-body { fill: rgb(148 163 184 / 0.08); stroke: rgb(148 163 184 / 0.45); }
+.gh-loan[data-s="sold"] .gh-loan-wheels { fill: rgb(148 163 184 / 0.45); }
+.gh-loan[data-s="sold"] .gh-loan-sold { opacity: 1; }
+.gh-loan .gh-loan-sold rect { fill: rgb(11 17 32 / 0.85); stroke: rgb(148 163 184 / 0.5); stroke-width: 0.8; }
+.gh-loan .gh-loan-sold text { fill: var(--color-ink); font-size: 6.8px; font-weight: 800; letter-spacing: 0.06em; }
+@keyframes gh-throb {
+  from { opacity: 1; }
+  to { opacity: 0.55; }
+}
+
+/* Glass tanks */
+.gh-tank-glass { fill: rgb(255 255 255 / 0.035); }
+.gh-tank-rim { fill: none; stroke: rgb(255 255 255 / 0.22); stroke-width: 1.5; transition: stroke 300ms ease; }
+.gh-tank[data-senior="1"] .gh-tank-rim { stroke: rgb(125 230 255 / 0.55); stroke-width: 2.2; }
+.gh-tank[data-empty="1"] .gh-tank-rim { stroke: rgb(244 63 94 / 0.6); }
+.gh-tank[data-none="1"] .gh-tank-rim { stroke-dasharray: 5 5; stroke: rgb(255 255 255 / 0.18); }
+.gh-tank-name { fill: var(--color-muted); font-size: 11.5px; font-weight: 600; }
+.gh-tank[data-senior="1"] .gh-tank-name { fill: var(--color-ink); font-size: 13px; font-weight: 700; }
+.gh-tank-amount { fill: var(--color-muted); font-size: 12.5px; font-weight: 700; }
+.gh-tank-amount[data-hit="1"] { fill: var(--color-bad-fg); }
+@media (max-width: 640px) {
+  .gh-tank-name { font-size: 13.5px; }
+  .gh-tank[data-senior="1"] .gh-tank-name { font-size: 14.5px; }
+  .gh-tank-amount { font-size: 14.5px; }
+}
+.gh-wave {
+  fill: var(--color-accent-light);
+  fill-opacity: 0.85;
+  animation: gh-wave 3.2s linear infinite;
+}
+@keyframes gh-wave {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(var(--wave-w) / 2)); }
+}
+.gh-pipe {
+  stroke: var(--color-bad);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 7 6;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  animation: gh-pour 600ms linear infinite;
+}
+.gh-pipe[data-on="1"] { opacity: 0.9; }
+@keyframes gh-pour {
+  to { stroke-dashoffset: -13; }
+}
+
+/* Price line */
+.gh-price-base { stroke: rgb(255 255 255 / 0.12); stroke-dasharray: 3 4; }
+.gh-price-ghost { stroke: rgb(255 255 255 / 0.12); stroke-width: 1.5; }
+.gh-price-line { stroke: var(--color-bad-fg); stroke-width: 2.2; stroke-linejoin: round; }
+.gh-price-dot { fill: var(--color-bad-fg); }
+
+/* Loss particles */
+.gh-particle { fill: var(--color-bad); filter: drop-shadow(0 0 3px rgb(244 63 94 / 0.8)); }
+
+/* 30x bank equity bar (2008 side) */
+.gh-bank {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.04);
+  overflow: hidden;
+}
+.gh-bank-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--color-accent-deep), var(--color-accent-light));
+}
+.gh-bank-crack { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.gh-bank-crack path { stroke: var(--color-bad-fg); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-dasharray: 40; stroke-dashoffset: 40; }
+.gh-bank[data-broken="1"] { border-color: rgb(244 63 94 / 0.7); animation: gh-shake 360ms ease-out 1; }
+.gh-bank[data-broken="1"] .gh-bank-crack { opacity: 1; }
+.gh-bank[data-broken="1"] .gh-bank-crack path { animation: gh-crack 420ms ease-out forwards; }
+@keyframes gh-crack {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes gh-shake {
+  20% { transform: translateX(-3px); }
+  45% { transform: translateX(3px); }
+  70% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gh-bank[data-broken="1"] .gh-bank-crack path { stroke-dashoffset: 0; }
+}
+
+/* Break-even tick on the price-drop slider */
+.gh-mark {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--color-bad-fg);
+  transform: translate(-1.5px, -50%);
+}
