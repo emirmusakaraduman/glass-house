@@ -81,3 +81,16 @@ export const LOAN_REPAID: EventLayout = [
   ["status", "u8"],
   ["nextDue", "i64"],
 ] as const;
+
+/** lifecycle/events.rs RecoveryRecorded. */
+export const RECOVERY_RECORDED: EventLayout = [
+  ["pool", "pubkey"],
+  ["loan", "pubkey"],
+  ["loanId", "u64"],
+  ["proceeds", "u64"],
+  ["collateralUsed", "u64"],
+  ["loss", "u64"],
+  ["firstLossUsed", "u64"],
+  ["reserveUsed", "u64"],
+  ["seniorLoss", "u64"],
+] as const;

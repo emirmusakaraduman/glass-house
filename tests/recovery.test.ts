@@ -4,7 +4,7 @@
 
 import { expect } from "chai";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { decodeEvent, EventLayout } from "./lib/events";
+import { decodeEvent, RECOVERY_RECORDED } from "./lib/events";
 import {
   assertInvariants,
   collateralDeducted,
@@ -85,18 +85,6 @@ function expectedWaterfall(c: Ctx, proceeds: bigint) {
   };
 }
 
-/** lifecycle/events.rs RecoveryRecorded (alan sırası Rust struct'ıyla aynı). Çözücü: tests/lib/events.ts. */
-const RECOVERY_RECORDED: EventLayout = [
-  ["pool", "pubkey"],
-  ["loan", "pubkey"],
-  ["loanId", "u64"],
-  ["proceeds", "u64"],
-  ["collateralUsed", "u64"],
-  ["loss", "u64"],
-  ["firstLossUsed", "u64"],
-  ["reserveUsed", "u64"],
-  ["seniorLoss", "u64"],
-];
 
 async function recover(c: Ctx, proceeds: bigint, coSigner?: Keypair) {
   const agent = c.env.recoveryAgent;
