@@ -1,0 +1,44 @@
+{
+  "name": "glasshouse-web",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "predev": "tsx scripts/listing-images.ts",
+    "dev": "next dev",
+    "prebuild": "tsx scripts/listing-images.ts",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "check:finance": "tsx scripts/check-finance.ts",
+    "check:mock": "tsx scripts/check-mock.ts",
+    "seed:listings": "tsx --env-file=.env.local --conditions=react-server scripts/refresh-seed.ts",
+    "listings:images": "tsx scripts/listing-images.ts",
+    "demo:screenshots": "tsx scripts/demo-screenshots.ts",
+    "idl:sync": "node -e \"const f=require('fs');f.copyFileSync('../deployments/idl/glasshouse.json','public/idl/glasshouse.json');f.copyFileSync('../deployments/idl/glasshouse.ts','src/lib/chain/idl/glasshouse.ts');console.log('IDL synced')\""
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/wallet-adapter-base": "^0.9.27",
+    "@solana/wallet-adapter-react": "^0.15.39",
+    "@solana/wallet-adapter-react-ui": "^0.9.39",
+    "@solana/web3.js": "^1.98.4",
+    "lucide-react": "^1.81.0",
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^3.2.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}
