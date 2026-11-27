@@ -12,6 +12,7 @@ import {
   BPS,
   ensureUsdcAta,
   collateralDeducted,
+  interestSettled,
   crankLoanIx,
   createPool,
   expectTxFail,
@@ -176,11 +177,13 @@ describe("repay", () => {
     expect(l.status).to.equal(LoanStatus.Late2);
     expect(collateralDeducted(l)).to.equal(inst);
     expect(tokenBalance(env, collateral)).to.equal(2n * inst);
+    expect(interestSettled(l) > 0n).to.equal(true); // teminattan ödenen faiz kaydedildi
 
     await pay(c, inst); // bir dönem kapanır, hâlâ bir vade geçmiş
     l = readLoan(env, c.loan);
     expect(l.status).to.equal(LoanStatus.Late2);
     expect(l.lastProcessedPeriod).to.equal(2n);
+    expect(interestSettled(l) > 0n).to.equal(true); // hâlâ aynı gecikme döngüsü
     expect(readPool(env, pool.pool).lateDefaultPrincipal).to.equal(l.remainingPrincipal);
     expect(l.provisionAmount).to.equal(ceilBps(l.remainingPrincipal, 1500));
 
@@ -188,6 +191,7 @@ describe("repay", () => {
     l = readLoan(env, c.loan);
     expect(l.status).to.equal(LoanStatus.Active);
     expect(l.lastProcessedPeriod).to.equal(0n);
+    expect(interestSettled(l)).to.equal(0n); // gecikmeden çıkış: yeni döngü temiz başlar
     expect(collateralDeducted(l)).to.equal(inst); // teminat yeniden dolmadı
     expect(readPool(env, pool.pool).lateDefaultPrincipal).to.equal(0n);
 
