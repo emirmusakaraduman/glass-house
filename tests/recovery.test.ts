@@ -1,5 +1,10 @@
+// record_recovery testleri (fixture ile): zarar sırası teminat → satış geliri → ilk zarar kasası
+// → yedek → senior. Senaryolar: yalnızca kasa, kasa + yedek, senior'a ulaşan zarar; düşük gelirde
+// ikinci imza; event. Her adımda assertInvariants.
+
 import { expect } from "chai";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { decodeEvent, RECOVERY_RECORDED } from "./lib/events";
 import {
   assertInvariants,
   collateralDeducted,
@@ -79,6 +84,7 @@ function expectedWaterfall(c: Ctx, proceeds: bigint) {
     }),
   };
 }
+
 
 async function recover(c: Ctx, proceeds: bigint, coSigner?: Keypair) {
   const agent = c.env.recoveryAgent;
@@ -218,5 +224,82 @@ describe("record_recovery", () => {
     expect(p.lossProvision).to.equal(0n);
     expect(p.lateDefaultPrincipal).to.equal(0n);
     expect(w.seniorLoss).to.equal(0n);
+  });
+
+  it("zarar FirstLossVault'u ve Reserve'in bir kısmını yer, senior'a ulaşmaz", async () => {
+    // Önce zararı ölç, sonra kasayı zararın yarısı, yedeği zarara yetecek kadar kur.
+    const probe = defaultedLoan();
+    const { w: probeW } = expectedWaterfall(probe, 63_000n * USDC);
+    const loss = probeW.loss;
+    expect(loss > 1n).to.equal(true);
+    const firstLoss = loss / 2n;
+    const reserve = loss;
+
+    const c = defaultedLoan({ firstLoss, reserve });
+    const p0 = readPool(c.env, c.pool.pool);
+    const { w } = expectedWaterfall(c, 63_000n * USDC);
+    expect(w.firstLossUsed).to.equal(firstLoss); // kasa tamamen biter
+    expect(w.reserveUsed).to.equal(loss - firstLoss); // yedek kısmen
+    expect(w.reserveUsed > 0n && w.reserveUsed < reserve).to.equal(true);
+    expect(w.seniorLoss).to.equal(0n);
+
+    await recover(c, 63_000n * USDC);
+
+    const p = readPool(c.env, c.pool.pool);
+    expect(p.firstLossBalance).to.equal(0n);
+    expect(p0.reserveBalance - p.reserveBalance).to.equal(loss - firstLoss);
+    expect(p.reserveBalance).to.equal(reserve - (loss - firstLoss));
+    expect(tokenBalance(c.env, c.pool.firstLoss)).to.equal(0n);
+    expect(tokenBalance(c.env, c.pool.reserve)).to.equal(p.reserveBalance);
+    expect(p.lossProvision).to.equal(0n);
+    expect(readLoan(c.env, c.loan).status).to.equal(LoanStatus.Recovered);
+  });
+
+  it("RecoveryRecorded event'i: gelir, zarar ve kasa/yedek/senior paylarını bildirir", async () => {
+    const c = defaultedLoan({ firstLoss: 1_000n * USDC, reserve: 500n * USDC });
+    const agent = c.env.recoveryAgent;
+    const { w } = expectedWaterfall(c, 50_000n * USDC);
+    const res = sendTx(
+      c.env,
+      [await recordRecoveryIx(c.env, c.pool, c.loan, 50_000n * USDC)],
+      [agent],
+    );
+    assertInvariants(c.env, c.pool, [c.loan]);
+
+    const d = decodeEvent(c.env, res.logs(), "RecoveryRecorded", RECOVERY_RECORDED);
+    expect(d.pool.toBase58()).to.equal(c.pool.pool.toBase58());
+    expect(d.loanId).to.equal(readLoan(c.env, c.loan).id);
+    expect(d.proceeds).to.equal(w.proceedsUsed);
+    expect(d.collateralUsed).to.equal(w.collateralUsed);
+    expect(d.loss).to.equal(w.loss);
+    expect(d.firstLossUsed).to.equal(w.firstLossUsed);
+    expect(d.reserveUsed).to.equal(w.reserveUsed);
+    expect(d.seniorLoss).to.equal(w.seniorLoss);
+    // Zarar üç yere bölünür; toplam zarara eşit.
+    expect(d.firstLossUsed + d.reserveUsed + d.seniorLoss).to.equal(d.loss);
+  });
+
+  it("reddedilen çağrılar (ikinci imza yok, yabancı) hiçbir şeyi değiştirmez; invariant'lar sağlam", async () => {
+    const c = defaultedLoan();
+    const agent = c.env.recoveryAgent;
+    const before = readPool(c.env, c.pool.pool);
+    const loanBefore = readLoan(c.env, c.loan);
+    const vault0 = tokenBalance(c.env, c.pool.vault);
+
+    expectTxFail(c.env, [await recordRecoveryIx(c.env, c.pool, c.loan, 1n * USDC)], [agent], "RecoveryBelowFloor");
+    assertInvariants(c.env, c.pool, [c.loan]);
+    const s = c.env.wallets.stranger;
+    fundUsdc(c.env, s.publicKey, 100_000n * USDC);
+    expectTxFail(
+      c.env,
+      [await recordRecoveryIx(c.env, c.pool, c.loan, 63_000n * USDC, { recoveryAgent: s.publicKey })],
+      [s],
+      "Unauthorized",
+    );
+    assertInvariants(c.env, c.pool, [c.loan]);
+
+    expect(readPool(c.env, c.pool.pool)).to.deep.equal(before);
+    expect(readLoan(c.env, c.loan)).to.deep.equal(loanBefore);
+    expect(tokenBalance(c.env, c.pool.vault)).to.equal(vault0);
   });
 });
