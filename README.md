@@ -187,8 +187,12 @@ See [docs/DEPLOY.md](docs/DEPLOY.md). Scripts default to a dry run and only writ
   Anchor program core: `state`, `math`, `nav`, the eight instructions listed above, their tests,
   and the deploy scripts. **[TODO: team to confirm and list anything else that existed earlier,
   such as libraries, design documents and the v1–v4 plans.]**
-- **During the hackathon:** **[TODO: list what is added from 27 November: repayment, withdrawals,
-  crank, recovery, risk logic, stress simulation, frontend, listing finder.]**
+- **Backend B (repayment, withdrawals, crank, recovery, tests, simulation):** `repay`, `payoff`,
+  `request_withdraw`, `process_withdrawals`, `crank_loan`, `record_recovery`, the provision tiers and
+  loss order, the LiteSVM test suite (143 tests), the 100-loan stress simulation (27 scenarios) and
+  the demo seed script. **[TODO: team to confirm which of these existed before 27 November.]**
+- **During the hackathon, other parts:** **[TODO: frontend, listing finder, README, video — owners
+  to add.]**
 - AI assistance: parts of the code, tests and documentation were written with Claude Code and
   reviewed by the team. **[TODO: confirm wording against the hackathon rules.]**
 
@@ -209,8 +213,24 @@ See [docs/DEPLOY.md](docs/DEPLOY.md). Scripts default to a dry run and only writ
   appraised value, and the borrower and seller wallet addresses (see [docs/LEGAL.md](docs/LEGAL.md)).
 - **Title confirmation is a trusted role.** Real identity and registry checks happen off-chain at
   the title agent.
-- **Late-ratio brake depends on the crank** that updates `late_default_principal`. **[TODO: status
-  of the teammate's repay, crank, withdrawal queue and recovery instructions.]**
+- **Late-ratio brake depends on the crank** that updates `late_default_principal`. `crank_loan` is
+  permissionless and idempotent (status is derived from the Solana Clock, the same period is never
+  processed twice). `repay`, `payoff`, `request_withdraw`, `process_withdrawals`, `crank_loan` and
+  `record_recovery` are implemented and covered by LiteSVM tests.
+- **Recovery proceeds use a single trusted signer.** `record_recovery` pulls the sale proceeds from
+  the recovery agent's USDC account with a real transfer; below `min_recovery_bps × value` the pool
+  admin must co-sign. The target design (escrow PDA + CPI + 2-of-3 signatures) is **not built**
+  (`TODO(2of3)` in `record_recovery.rs`).
+- **Withdrawals are a FIFO queue with no per-period gate.** At most 3 requests are processed per
+  transaction, each at the NAV of that moment, only from idle cash, never partially. If the request
+  at the head of the queue cannot be paid, the queue waits (`InsufficientIdleCash`); a request whose
+  payout account was closed is skipped so the queue never locks.
+- **Collateral cut at Late2 is a prepayment, not an instalment.** The cut pays late fee, interest and
+  principal but does not advance the due date; the interest it paid is deducted from the accrued
+  interest at default (so it is not counted twice). A borrower who cures pays the missed instalments
+  in full and the collateral gap is not refilled (stretch).
+- **Stress simulation:** the house and 2008-mode results are measured on the real program; the
+  vehicle results are an estimate (damage, theft and second-hand discounts are not modelled).
 - **Vehicle numbers use the house safety parameters** (provision, brakes, buffer, fee); the
   vehicle stress table is an estimate.
 
