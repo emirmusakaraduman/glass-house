@@ -19,3 +19,11 @@ dist/
 scripts/out/
 
 .DS_Store
+
+# Frontend and tooling
+out/
+*.tsbuildinfo
+.env*.local
+.netlify/
+.vercel/
+.claude/settings.local.json
