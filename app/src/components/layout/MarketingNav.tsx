@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cx } from "../ui";
-import { LogoLink } from "./Logo";
+import { Logo } from "../brand/Logo";
 import { MARKETING_NAV, isNavActive } from "./routes";
 import { DataSourceBadge, WalletButton } from "./WalletBits";
 
@@ -23,7 +23,7 @@ export function MarketingNav() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-frost/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-[1200px] 2xl:max-w-[1400px] items-center gap-4 px-5 sm:px-8">
-        <LogoLink onClick={() => setOpen(false)} />
+        <Logo href="/" onClick={() => setOpen(false)} />
 
         <nav aria-label="Main" className="hidden min-w-0 flex-1 justify-center lg:flex">
           <div className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] p-1">

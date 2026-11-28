@@ -2,6 +2,7 @@
 
 // lucide's Home icon is imported as HomeIcon so it doesn't clash with the page component.
 import { AlertTriangle, ArrowRight, Blocks, Car, Eye, FileCode2, Home as HomeIcon, KeyRound, Lock, type LucideIcon, Percent, PlayCircle, Search, ShieldCheck, Wallet } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { GlassHouseHero } from "@/components/hero/GlassHouseHero";
 import { LoanTable } from "@/components/LoanBits";
@@ -11,6 +12,7 @@ import { ButtonLink, GlassCard, IconBadge, LoadError, Pane, PaneTitle, Skeleton,
 import { DATA_SOURCE, computeMetrics } from "@/lib/chain";
 import { pct, usd } from "@/lib/format";
 import { HOUSE_POOL, VEHICLE_POOL } from "@/lib/pools";
+import brandMark from "../../../public/brand/glasshouse-mark.png";
 
 const STEPS: { title: string; body: string; icon: LucideIcon }[] = [
   {
@@ -229,6 +231,12 @@ export default function Home() {
         {/* The hero photo lives in the hero now; here a quiet cyan wash with a warm hint at the bottom. */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_90%_at_50%_0%,rgb(0_210_255/0.16),transparent_70%),radial-gradient(50%_60%_at_50%_115%,rgb(245_158_11/0.09),transparent_70%)]" aria-hidden />
         <div className="pointer-events-none absolute inset-x-0 -top-24 mx-auto h-48 w-[70%] rounded-full bg-accent/20 blur-3xl" aria-hidden />
+        <Image
+          src={brandMark}
+          alt=""
+          sizes="120px"
+          className="relative mx-auto mb-6 h-auto w-[104px] drop-shadow-[0_0_18px_rgb(0_210_255/0.4)] sm:w-[120px]"
+        />
         <h2 className="display relative text-[30px] sm:text-[44px]">
           Paid in USDC? <span className="text-gradient">See what you can buy.</span>
         </h2>
