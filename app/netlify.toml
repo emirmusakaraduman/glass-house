@@ -1,5 +1,6 @@
 # Netlify build for the GlassHouse web app. In the Netlify UI set Base directory = app.
-# The Next.js runtime (OpenNext adapter) is added by Netlify automatically; no plugin here.
+# The Next.js runtime plugin is listed explicitly: with a custom publish directory set in the
+# Netlify UI, Netlify skips installing it by itself and every route answers 404 ("0 functions").
 
 [build]
   command = "npm run build"
@@ -7,3 +8,6 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
