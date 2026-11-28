@@ -301,7 +301,7 @@ function GrowthChart({ points, range }: { points: SharePricePoint[]; range: Rang
   const inRange = RANGES[range] === Infinity ? points : points.filter((p) => p.at >= now - RANGES[range]);
   if (inRange.length < 2) {
     return (
-      <div className="flex h-[260px] flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-white/12 text-center text-sm text-muted">
+      <div className="flex h-[260px] flex-col items-center justify-center gap-2 rounded-[12px] border border-dashed border-haze/12 text-center text-sm text-muted">
         <TrendingUp className="h-5 w-5" aria-hidden />
         Not enough history for this range yet.
       </div>
@@ -330,8 +330,8 @@ function GrowthChart({ points, range }: { points: SharePricePoint[]; range: Rang
 function PortfolioSplit({ house, vehicle }: { house: number; vehicle: number }) {
   const total = house + vehicle;
   const slices = [
-    { name: "Home loans", value: house, color: "#00d2ff" },
-    { name: "Car loans", value: vehicle, color: "#818cf8" },
+    { name: "Home loans", value: house, color: "var(--color-chart-home)" },
+    { name: "Car loans", value: vehicle, color: "var(--color-chart-car)" },
   ];
   return (
     <div className="flex flex-1 flex-col justify-center gap-5">
@@ -398,7 +398,7 @@ function DepositForm({ poolId, sharePrice }: { poolId: PoolId; sharePrice: numbe
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between rounded-[12px] border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm">
+      <div className="mb-4 flex items-center justify-between rounded-[12px] border border-haze/10 bg-haze/[0.04] px-3.5 py-2.5 text-sm">
         <span className="text-muted">Wallet balance</span>
         <span className="num font-bold">
           {balance === null ? "–" : num(balance, 2)} <span className="font-medium text-muted">{unit}</span>
@@ -457,7 +457,7 @@ function PositionCard({
         <Layers className="h-4 w-4" aria-hidden />
         Invest more
       </Button>
-      <div className="mt-5 border-t border-white/[0.08] pt-4">
+      <div className="mt-5 border-t border-haze/[0.08] pt-4">
         <Field label="Shares to withdraw" hint="Requests wait in line and are paid at the share price of that moment, from free cash only.">
           <TextInput inputMode="decimal" value={shares} onChange={(e) => setShares(e.target.value)} placeholder="0" />
         </Field>

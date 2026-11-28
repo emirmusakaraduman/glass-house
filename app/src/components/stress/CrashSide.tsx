@@ -231,7 +231,7 @@ export function CrashSide({
   useEffect(() => wake(), [tl, kind, wake]);
 
   const stat = (label: string, key: "month" | "defaults" | "drop" | "loss", initial: string) => (
-    <div className="gh-fx-solid min-w-0 rounded-lg border border-white/[0.07] bg-white/[0.025] px-2.5 py-1">
+    <div className="gh-fx-solid min-w-0 rounded-lg border border-haze/[0.07] bg-haze/[0.025] px-2.5 py-1">
       <dt className="text-[12px] leading-tight text-muted">{label}</dt>
       <dd
         ref={(el) => {

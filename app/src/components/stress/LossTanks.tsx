@@ -129,8 +129,8 @@ export function LossTanks({ capacity, ref }: { capacity: Absorbed; ref?: Ref<Tan
       <svg ref={svg} viewBox={`0 0 ${VB.w} ${VB.h}`} className="block h-auto w-full overflow-visible" aria-hidden focusable="false">
         <defs>
           <linearGradient id={`${uid}-liq`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--color-accent-light)" stopOpacity="0.85" />
-            <stop offset="1" stopColor="var(--color-accent-deep)" stopOpacity="0.85" />
+            <stop offset="0" stopColor="var(--color-liquid-top)" stopOpacity="0.85" />
+            <stop offset="1" stopColor="var(--color-liquid-bottom)" stopOpacity="0.85" />
           </linearGradient>
           {LAYERS.map((k) => {
             const g = TANK[k];

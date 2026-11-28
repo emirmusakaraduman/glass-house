@@ -204,7 +204,7 @@ export default function TransparencyPage() {
                   key={g.label}
                   onClick={() => setGroup(i)}
                   aria-pressed={group === i}
-                  className={cx("rounded-full border px-3 py-1 text-sm font-medium", group === i ? "fill-accent border-transparent" : "border-white/12 bg-white/[0.04] text-muted hover:border-accent/50 hover:text-ink")}
+                  className={cx("rounded-full border px-3 py-1 text-sm font-medium", group === i ? "fill-accent border-transparent" : "border-haze/12 bg-haze/[0.04] text-muted hover:border-accent/50 hover:text-ink")}
                 >
                   {g.label}
                 </button>
@@ -243,7 +243,7 @@ export default function TransparencyPage() {
         </div>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#00d2ff]" aria-hidden /> Home loans (cap {pct(POOLS.house.maxLtv, 0)})
+            <span className="h-2.5 w-2.5 rounded-full bg-chart-home" aria-hidden /> Home loans (cap {pct(POOLS.house.maxLtv, 0)})
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-indigo" aria-hidden /> Car loans (cap {pct(POOLS.vehicle.maxLtv, 0)})

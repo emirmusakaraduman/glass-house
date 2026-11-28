@@ -6,6 +6,7 @@ import { closingCash, closingCashWithBuffer } from "@/lib/finance";
 import { num, pct, usd } from "@/lib/format";
 import type { Listing, ListingWithComp } from "@/lib/listings/types";
 import { MAX_VEHICLE_AGE_YEARS, POOLS } from "@/lib/pools";
+import { useTheme } from "./providers/ThemeProvider";
 import { Button, cx } from "./ui";
 
 /** Listing ids with a photo at public/listings/{id}.webp (written by scripts/listing-images.ts). */
@@ -27,42 +28,47 @@ function Placeholder({ id, type, kind }: { id: string; type: "house" | "vehicle"
   const lit = (n: number) => ((s >>> (n + 3)) & 1) === 1;
   const gid = `ph-${id}`;
   const skyline = Array.from({ length: 9 }, (_, i) => 6 + ((s >>> (i * 3)) % 14));
+  // Night scene on dark, a pale day scene on light; lines and windows follow the theme.
+  const light = useTheme().theme === "light";
+  const c = light
+    ? { bg0: `hsl(${hue} 70% 96%)`, bg1: `hsl(${hue + 18} 55% 88%)`, glow: `hsl(${hue + 8} 80% 70%)`, line0: "#0e7490", line1: lit(1) ? "#4f46e5" : "#0891b2", sky: "#0f172a", glass: "#0891b2", lamp: "#f59e0b", wheel: `hsl(${hue} 30% 28%)`, beam: "#f59e0b" }
+    : { bg0: `hsl(${hue} 55% 9%)`, bg1: `hsl(${hue + 18} 60% 16%)`, glow: `hsl(${hue + 8} 85% 62%)`, line0: "#e0f7ff", line1: lit(1) ? "#a5b4fc" : "#7de6ff", sky: "#ffffff", glass: "#7de6ff", lamp: "#fcd34d", wheel: `hsl(${hue} 55% 9%)`, beam: "#fde68a" };
 
   return (
     <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden>
       <defs>
         <linearGradient id={`${gid}-bg`} gradientTransform={`rotate(${angle} 0.5 0.5)`}>
-          <stop offset="0" stopColor={`hsl(${hue} 55% 9%)`} />
-          <stop offset="1" stopColor={`hsl(${hue + 18} 60% 16%)`} />
+          <stop offset="0" stopColor={c.bg0} />
+          <stop offset="1" stopColor={c.bg1} />
         </linearGradient>
         <radialGradient id={`${gid}-glow`} cx={`${gx}%`} cy="78%" r="60%">
-          <stop offset="0" stopColor={`hsl(${hue + 8} 85% 62%)`} stopOpacity="0.45" />
+          <stop offset="0" stopColor={c.glow} stopOpacity="0.45" />
           <stop offset="1" stopColor={`hsl(${hue} 80% 50%)`} stopOpacity="0" />
         </radialGradient>
         <linearGradient id={`${gid}-line`} x1="0" x2="1">
-          <stop offset="0" stopColor="#e0f7ff" />
-          <stop offset="1" stopColor={lit(1) ? "#a5b4fc" : "#7de6ff"} />
+          <stop offset="0" stopColor={c.line0} />
+          <stop offset="1" stopColor={c.line1} />
         </linearGradient>
       </defs>
       <rect width="200" height="120" fill={`url(#${gid}-bg)`} />
       <rect width="200" height="120" fill={`url(#${gid}-glow)`} />
       {/* distant skyline */}
-      <g fill="#ffffff" fillOpacity="0.05">
+      <g fill={c.sky} fillOpacity="0.05">
         {skyline.map((h, i) => (
           <rect key={i} x={i * 23} y={78 - h} width="17" height={h + 10} />
         ))}
       </g>
-      <line x1="0" y1="96" x2="200" y2="96" stroke="#ffffff" strokeOpacity="0.08" />
+      <line x1="0" y1="96" x2="200" y2="96" stroke={c.sky} strokeOpacity="0.08" />
 
       {kind === "tower" ? (
         <g stroke={`url(#${gid}-line)`} strokeWidth="1.6" strokeLinejoin="round" fill="none">
           {/* apartment tower: glass slab with a lit window grid */}
-          <rect x="82" y="22" width="40" height="74" fill="#7de6ff" fillOpacity="0.08" />
+          <rect x="82" y="22" width="40" height="74" fill={c.glass} fillOpacity="0.08" />
           <path d="M122 22 l12 6 v68" strokeOpacity="0.55" />
           {Array.from({ length: 12 }, (_, i) => {
             const x = 87 + (i % 3) * 11;
             const y = 28 + Math.floor(i / 3) * 16;
-            return <rect key={i} x={x} y={y} width="7" height="10" stroke="none" fill={lit(i) ? "#fcd34d" : "#7de6ff"} fillOpacity={lit(i) ? 0.6 : 0.14} />;
+            return <rect key={i} x={x} y={y} width="7" height="10" stroke="none" fill={lit(i) ? c.lamp : c.glass} fillOpacity={lit(i) ? 0.6 : 0.14} />;
           })}
           <path d={`M${lit(4) ? 150 : 56} 96 v-10`} strokeOpacity="0.5" />
           <circle cx={lit(4) ? 150 : 56} cy="80" r="6" strokeOpacity="0.5" />
@@ -71,7 +77,7 @@ function Placeholder({ id, type, kind }: { id: string; type: "house" | "vehicle"
         <g stroke={`url(#${gid}-line)`} strokeWidth="1.6" strokeLinejoin="round" fill="none">
           {/* simple glass house: two floors and a slanted roof */}
           <path d="M70 52 L100 36 L132 52" />
-          <rect x="74" y="52" width="54" height="44" fill="#7de6ff" fillOpacity="0.08" />
+          <rect x="74" y="52" width="54" height="44" fill={c.glass} fillOpacity="0.08" />
           <path d="M74 74 H128 M101 52 V96" strokeOpacity="0.55" />
           {[
             [78, 56],
@@ -79,7 +85,7 @@ function Placeholder({ id, type, kind }: { id: string; type: "house" | "vehicle"
             [78, 78],
             [105, 78],
           ].map(([x, y], i) => (
-            <rect key={i} x={x} y={y} width="19" height="14" stroke="none" fill={lit(i) ? "#fcd34d" : "#7de6ff"} fillOpacity={lit(i) ? 0.55 : 0.12} />
+            <rect key={i} x={x} y={y} width="19" height="14" stroke="none" fill={lit(i) ? c.lamp : c.glass} fillOpacity={lit(i) ? 0.55 : 0.12} />
           ))}
           {/* tree */}
           <path d={`M${lit(5) ? 150 : 52} 96 v-12`} strokeOpacity="0.5" />
@@ -90,18 +96,18 @@ function Placeholder({ id, type, kind }: { id: string; type: "house" | "vehicle"
           {/* side view of a car on a road with headlight beam; SUVs and pickups sit taller */}
           {kind === "tall" ? (
             <>
-              <path d="M52 86 h96 v-14 l-10 -4 -8 -18 h-54 l-10 18 -14 4 z" fill="#7de6ff" fillOpacity="0.1" />
+              <path d="M52 86 h96 v-14 l-10 -4 -8 -18 h-54 l-10 18 -14 4 z" fill={c.glass} fillOpacity="0.1" />
               <path d="M82 68 l6 -14 h40 l6 14 z" strokeOpacity="0.6" />
             </>
           ) : (
             <>
-              <path d="M52 86 h96 v-10 l-14 -5 -12 -13 h-40 l-14 13 -10 3 z" fill="#7de6ff" fillOpacity="0.1" />
+              <path d="M52 86 h96 v-10 l-14 -5 -12 -13 h-40 l-14 13 -10 3 z" fill={c.glass} fillOpacity="0.1" />
               <path d="M84 71 l9 -10 h21 l9 10 z" strokeOpacity="0.6" />
             </>
           )}
-          <circle cx="74" cy="88" r="7" fill={`hsl(${hue} 55% 9%)`} />
-          <circle cx="128" cy="88" r="7" fill={`hsl(${hue} 55% 9%)`} />
-          <path d="M148 80 L196 72 L196 92 Z" stroke="none" fill="#fde68a" fillOpacity={lit(2) ? 0.16 : 0.08} />
+          <circle cx="74" cy="88" r="7" fill={c.wheel} />
+          <circle cx="128" cy="88" r="7" fill={c.wheel} />
+          <path d="M148 80 L196 72 L196 92 Z" stroke="none" fill={c.beam} fillOpacity={lit(2) ? 0.16 : 0.08} />
           <path d="M10 104 h22 M50 104 h22 M90 104 h22 M130 104 h22 M170 104 h22" strokeOpacity="0.3" />
         </g>
       )}
@@ -147,9 +153,9 @@ export function ListingCard({ listing, maxPrice, onApply }: { listing: ListingWi
 
   return (
     <article className="pane flex flex-col overflow-hidden p-0 motion-safe:transition-[border-color,transform] motion-safe:duration-200 motion-safe:hover:-translate-y-1">
-      <div className="relative aspect-[5/3] w-full overflow-hidden border-b border-white/10 bg-night">
+      <div className="relative aspect-[5/3] w-full overflow-hidden border-b border-haze/10 bg-night">
         <ListingVisual listing={listing} />
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-frost/70 px-2.5 py-1 text-[12.5px] font-semibold text-ink backdrop-blur">
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-haze/15 bg-frost/70 px-2.5 py-1 text-[12.5px] font-semibold text-ink backdrop-blur">
           {listing.type === "house" ? <Home className="h-3.5 w-3.5 text-steel" aria-hidden /> : <Car className="h-3.5 w-3.5 text-steel" aria-hidden />}
           {listing.type === "house" ? "Home" : "Car"}
         </span>
@@ -188,7 +194,7 @@ export function ListingCard({ listing, maxPrice, onApply }: { listing: ListingWi
           )}
         </ul>
 
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-white/[0.08] pt-3">
+        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-haze/[0.08] pt-3">
           <div>
             <dt className="dense text-[12.5px] text-muted">Monthly installment</dt>
             <dd className="num text-[17px] font-bold">{usd(cash.installment, { cents: true })}</dd>

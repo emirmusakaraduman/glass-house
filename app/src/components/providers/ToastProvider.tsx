@@ -78,7 +78,7 @@ function ToastCard({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <li
       className={
-        "gh-toast flex gap-3 rounded-[16px] border bg-[rgb(19_28_49/0.92)] p-3.5 shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_20px_40px_-16px_rgb(0_0_0/0.8)] backdrop-blur-xl " +
+        "gh-toast flex gap-3 rounded-[16px] border bg-[rgb(var(--glass-rgb)/0.92)] p-3.5 shadow-[inset_0_1px_0_rgb(var(--haze-rgb)/0.08),0_20px_40px_-16px_rgb(0_0_0/calc(0.8*var(--glow)))] backdrop-blur-xl " +
         (tone === "bad" ? "border-bad/45" : tone === "info" ? "border-accent-light/35" : "border-ok/40")
       }
     >
@@ -96,7 +96,7 @@ function ToastCard({ toast, onClose }: { toast: Toast; onClose: () => void }) {
           )
         ) : null}
       </div>
-      <button onClick={onClose} aria-label="Dismiss notification" className="-mr-1 -mt-1 h-7 w-7 shrink-0 rounded-full text-muted hover:bg-white/10 hover:text-ink">
+      <button onClick={onClose} aria-label="Dismiss notification" className="-mr-1 -mt-1 h-7 w-7 shrink-0 rounded-full text-muted hover:bg-haze/10 hover:text-ink">
         <X className="mx-auto h-4 w-4" aria-hidden />
       </button>
     </li>

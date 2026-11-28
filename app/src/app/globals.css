@@ -42,10 +42,138 @@
   --color-bad: #f43f5e;
   --color-bad-fg: #fb7185;
 
+  /* Semantic tokens added for light mode. Dark values are the colors used before. */
+  --color-haze: #ffffff; /* overlays: bg-haze/[0.04], border-haze/10 (white in dark, slate in light) */
+  --color-line: rgb(255 255 255 / 0.1); /* card and input edges */
+  --color-line-hover: rgb(0 210 255 / 0.4);
+  --color-surface-2: rgb(255 255 255 / 0.05); /* inner boxes, inputs */
+  --color-accent-ink: #00d2ff; /* cyan text, icons, links, active menu items */
+  --color-gold-ink: #0b1120; /* text on gold, both themes */
+  --color-ok-soft: rgb(52 211 153 / 0.1);
+  --color-warn-soft: rgb(251 146 60 / 0.1);
+  --color-bad-soft: rgb(244 63 94 / 0.1);
+  --color-chart-home: #00d2ff;
+  --color-chart-car: #818cf8;
+  --color-chart-grid: rgb(255 255 255 / 0.06);
+  --color-liquid-top: #7de6ff; /* stress tanks */
+  --color-liquid-bottom: #0094b8;
+
   --radius-card: 20px;
   --radius-inner: 12px;
 
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+  Themes: <html data-theme="dark|light"> (set before first paint by the script in app/layout.tsx).
+  A nested [data-theme="dark"] (the hero's night window, ?present=1) brings the dark values back.
+*/
+:root,
+[data-theme="dark"] {
+  --haze-rgb: 255 255 255;
+  --glass-rgb: 19 28 49;
+  --frost-rgb: 11 17 32;
+  /* Multiplies every cyan glow and tint: full in dark, softened in light. */
+  --glow: 1;
+  --shadow-card: 0 0 #0000;
+  /* Loss stacks (LossStack, GlassStack3D) */
+  --stack-face: linear-gradient(135deg, rgb(125 230 255 / 0.16), rgb(0 210 255 / 0.06));
+  --stack-fill: linear-gradient(90deg, rgb(0 210 255 / 0.38), rgb(125 230 255 / 0.22));
+  --stack-layer: linear-gradient(90deg, rgb(0 210 255 / 0.3), rgb(125 230 255 / 0.16));
+  --stack-senior: linear-gradient(90deg, rgb(0 210 255 / 0.55), rgb(125 230 255 / 0.35));
+  --stack-edge-strong: rgb(125 230 255 / 0.6);
+  --stack-edge: rgb(125 230 255 / 0.55);
+  --stack-edge-soft: rgb(125 230 255 / 0.3);
+  /* Brand mark: the glowing glass mark on dark, the solid deep-cyan mark on light */
+  --logo-glass: block;
+  --logo-solid: none;
+  --logo-solid-color: #00d2ff;
+  /* /stress collapse vignette */
+  --vignette-rgb: 244 63 94;
+  --vignette-pulse: 0.35;
+  --vignette-rest: 0.12;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-frost: #0b1120;
+  --color-night: #131c31;
+  --color-surface: #131c31;
+  --color-ink: #f1f5f9;
+  --color-muted: rgb(203 213 225 / 0.7);
+  --color-steel: #00d2ff;
+  --color-steel-soft: #94a3b8;
+  --color-accent-light: #7de6ff;
+  --color-accent-deep: #0094b8;
+  --color-accent-pale: #e0f7ff;
+  --color-indigo: #818cf8;
+  --color-ok: #34d399;
+  --color-warn: #fb923c;
+  --color-bad: #f43f5e;
+  --color-bad-fg: #fb7185;
+  --color-haze: #ffffff;
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-hover: rgb(0 210 255 / 0.4);
+  --color-surface-2: rgb(255 255 255 / 0.05);
+  --color-accent-ink: #00d2ff;
+  --color-ok-soft: rgb(52 211 153 / 0.1);
+  --color-warn-soft: rgb(251 146 60 / 0.1);
+  --color-bad-soft: rgb(244 63 94 / 0.1);
+  --color-chart-home: #00d2ff;
+  --color-chart-car: #818cf8;
+  --color-chart-grid: rgb(255 255 255 / 0.06);
+  --color-liquid-top: #7de6ff;
+  --color-liquid-bottom: #0094b8;
+  color: var(--color-ink);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --haze-rgb: 15 23 42;
+  --glass-rgb: 255 255 255;
+  --frost-rgb: 245 248 252;
+  --glow: 0.45;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 8px 24px rgb(15 23 42 / 0.06);
+  --stack-face: linear-gradient(135deg, #ecfeff, #cffafe);
+  --stack-fill: #cffafe;
+  --stack-layer: #cffafe;
+  --stack-senior: linear-gradient(90deg, #a5f3fc, #cffafe);
+  --stack-edge-strong: #0891b2;
+  --stack-edge: #0891b2;
+  --stack-edge-soft: rgb(8 145 178 / 0.55);
+  --logo-glass: none;
+  --logo-solid: block;
+  --logo-solid-color: #0e7490;
+  --vignette-rgb: 248 113 113;
+  --vignette-pulse: 0.18;
+  --vignette-rest: 0.08;
+  --color-frost: #f5f8fc;
+  --color-night: #ffffff;
+  --color-surface: #ffffff;
+  --color-ink: #0b1120;
+  --color-muted: #475569;
+  --color-steel: #0e7490;
+  --color-steel-soft: #64748b;
+  --color-accent-light: #0e7490;
+  --color-accent-deep: #0e7490;
+  --color-accent-pale: #ecfeff;
+  --color-indigo: #4f46e5;
+  --color-ok: #047857;
+  --color-warn: #c2410c;
+  --color-bad: #be123c;
+  --color-bad-fg: #be123c;
+  --color-haze: #0f172a;
+  --color-line: #e2e8f0;
+  --color-line-hover: rgb(14 116 144 / 0.35);
+  --color-surface-2: #f1f5f9;
+  --color-accent-ink: #0e7490;
+  --color-ok-soft: #ecfdf5;
+  --color-warn-soft: #fff7ed;
+  --color-bad-soft: #fff1f2;
+  --color-chart-home: #0891b2;
+  --color-chart-car: #6366f1;
+  --color-chart-grid: #e2e8f0;
+  --color-liquid-top: #22d3ee;
+  --color-liquid-bottom: #0891b2;
+  color: var(--color-ink);
 }
 
 html {
@@ -70,14 +198,14 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60rem 32rem at 50% -12rem, rgb(0 210 255 / 0.13), transparent 70%),
+    radial-gradient(60rem 32rem at 50% -12rem, rgb(0 210 255 / calc(0.13 * var(--glow))), transparent 70%),
     radial-gradient(40rem 30rem at -8rem 8rem, rgb(30 64 175 / 0.22), transparent 70%),
-    radial-gradient(42rem 32rem at calc(100% + 8rem) 30%, rgb(0 210 255 / 0.07), transparent 70%),
+    radial-gradient(42rem 32rem at calc(100% + 8rem) 30%, rgb(0 210 255 / calc(0.07 * var(--glow))), transparent 70%),
     radial-gradient(50rem 30rem at 70% calc(100% + 10rem), rgb(37 99 235 / 0.1), transparent 70%);
 }
 
 ::selection {
-  background: rgb(0 210 255 / 0.35);
+  background: rgb(0 210 255 / calc(0.35 * var(--glow)));
   color: #fff;
 }
 
@@ -126,11 +254,11 @@ body::before {
 
 .pane {
   position: relative;
-  background: rgb(19 28 49 / 0.7);
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(var(--glass-rgb) / 0.7);
+  border: 1px solid rgb(var(--haze-rgb) / 0.1);
   border-radius: var(--radius-card);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    inset 0 1px 0 rgb(var(--haze-rgb) / 0.07),
     0 24px 48px -28px rgb(0 0 0 / 0.65);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -138,28 +266,28 @@ body::before {
 }
 
 .pane:hover {
-  border-color: rgb(0 210 255 / 0.4);
+  border-color: rgb(0 210 255 / calc(0.4 * var(--glow)));
 }
 
 /* Cyan-tinted card for the one thing on a screen that matters most. */
 .pane-highlight {
   background:
-    linear-gradient(180deg, rgb(0 210 255 / 0.12), rgb(0 210 255 / 0.03)),
-    rgb(19 28 49 / 0.7);
-  border-color: rgb(0 210 255 / 0.3);
+    linear-gradient(180deg, rgb(0 210 255 / calc(0.12 * var(--glow))), rgb(0 210 255 / calc(0.03 * var(--glow)))),
+    rgb(var(--glass-rgb) / 0.7);
+  border-color: rgb(0 210 255 / calc(0.3 * var(--glow)));
 }
 
 .pane-glow {
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.1),
-    0 0 0 1px rgb(0 210 255 / 0.12),
-    0 18px 60px -14px rgb(0 210 255 / 0.32);
+    inset 0 1px 0 rgb(var(--haze-rgb) / 0.1),
+    0 0 0 1px rgb(0 210 255 / calc(0.12 * var(--glow))),
+    0 18px 60px -14px rgb(0 210 255 / calc(0.32 * var(--glow)));
 }
 
 .pane-flat {
-  border: 1px solid rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(var(--haze-rgb) / 0.1);
   border-radius: var(--radius-inner);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--haze-rgb) / 0.03);
 }
 
 /* Main action, one per screen: gold fill, navy text (8.8:1), a light gold glow. */
@@ -167,36 +295,36 @@ body::before {
   color: #0b1120;
   background: var(--color-gold);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 1px 0 rgb(var(--haze-rgb) / 0.35),
     0 8px 22px -10px rgb(245 158 11 / 0.6);
 }
 .btn-gold:hover:not(:disabled) {
   background: var(--color-gold-hover);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    inset 0 1px 0 rgb(var(--haze-rgb) / 0.45),
     0 10px 28px -10px rgb(251 191 36 / 0.75);
 }
 
 /* Important but not the main action: cyan-tinted glass with a cyan edge. */
 .btn-accent {
   color: var(--color-ink);
-  background: rgb(0 210 255 / 0.14);
+  background: rgb(0 210 255 / calc(0.14 * var(--glow)));
   box-shadow:
-    inset 0 0 0 1px rgb(0 210 255 / 0.5),
-    0 6px 18px -10px rgb(0 210 255 / 0.5);
+    inset 0 0 0 1px rgb(0 210 255 / calc(0.5 * var(--glow))),
+    0 6px 18px -10px rgb(0 210 255 / calc(0.5 * var(--glow)));
 }
 .btn-accent:hover:not(:disabled) {
-  background: rgb(0 210 255 / 0.22);
+  background: rgb(0 210 255 / calc(0.22 * var(--glow)));
   box-shadow:
-    inset 0 0 0 1px rgb(0 210 255 / 0.75),
-    0 8px 22px -10px rgb(0 210 255 / 0.6);
+    inset 0 0 0 1px rgb(0 210 255 / calc(0.75 * var(--glow))),
+    0 8px 22px -10px rgb(0 210 255 / calc(0.6 * var(--glow)));
 }
 
 /* Selected state: active tabs, filter chips, step dots, the slider bubble. Navy on cyan is 10.5:1. */
 .fill-accent {
   color: #0b1120;
   background: var(--color-accent);
-  box-shadow: 0 6px 18px -8px rgb(0 210 255 / 0.65);
+  box-shadow: 0 6px 18px -8px rgb(0 210 255 / calc(0.65 * var(--glow)));
 }
 
 /* Decorative accent gradient (bars, progress, stepper lines). */
@@ -245,13 +373,13 @@ select option {
 }
 .wallet-adapter-button-trigger {
   color: var(--color-ink) !important;
-  background: rgb(19 28 49 / 0.7) !important;
-  box-shadow: inset 0 0 0 1px rgb(0 210 255 / 0.45);
+  background: rgb(var(--glass-rgb) / 0.7) !important;
+  box-shadow: inset 0 0 0 1px rgb(0 210 255 / calc(0.45 * var(--glow)));
   backdrop-filter: blur(12px);
 }
 .wallet-adapter-button-trigger:not([disabled]):hover {
-  background: rgb(0 210 255 / 0.1) !important;
-  box-shadow: inset 0 0 0 1px rgb(0 210 255 / 0.75);
+  background: rgb(0 210 255 / calc(0.1 * var(--glow))) !important;
+  box-shadow: inset 0 0 0 1px rgb(0 210 255 / calc(0.75 * var(--glow)));
 }
 .wallet-adapter-button:not([disabled]):focus-visible {
   outline: 2px solid var(--color-accent) !important;
@@ -263,8 +391,8 @@ select option {
 }
 .wallet-adapter-dropdown-list {
   font-family: var(--font-sans) !important;
-  background: rgb(19 28 49 / 0.94) !important;
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(var(--glass-rgb) / 0.94) !important;
+  border: 1px solid rgb(var(--haze-rgb) / 0.1);
   border-radius: var(--radius-inner) !important;
   backdrop-filter: blur(24px);
   box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.7) !important;
@@ -274,20 +402,20 @@ select option {
   font-size: 14px !important;
 }
 .wallet-adapter-dropdown-list-item:not([disabled]):hover {
-  background-color: rgb(0 210 255 / 0.15) !important;
+  background-color: rgb(0 210 255 / calc(0.15 * var(--glow))) !important;
 }
 .wallet-adapter-modal-overlay {
-  background: rgb(11 17 32 / 0.75) !important;
+  background: rgb(var(--frost-rgb) / 0.75) !important;
   backdrop-filter: blur(6px);
 }
 .wallet-adapter-modal-wrapper {
   font-family: var(--font-sans) !important;
-  background: linear-gradient(180deg, rgb(24 35 60 / 0.94), rgb(19 28 49 / 0.96)) !important;
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(180deg, rgb(var(--glass-rgb) / 0.94), rgb(var(--glass-rgb) / 0.96)) !important;
+  border: 1px solid rgb(var(--haze-rgb) / 0.1);
   border-radius: var(--radius-card) !important;
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.08),
-    0 30px 80px -24px rgb(0 210 255 / 0.3) !important;
+    inset 0 1px 0 rgb(var(--haze-rgb) / 0.08),
+    0 30px 80px -24px rgb(0 210 255 / calc(0.3 * var(--glow))) !important;
   backdrop-filter: blur(24px);
 }
 .wallet-adapter-modal-title {
@@ -295,7 +423,7 @@ select option {
   color: var(--color-ink) !important;
 }
 .wallet-adapter-modal-button-close {
-  background: rgb(255 255 255 / 0.08) !important;
+  background: rgb(var(--haze-rgb) / 0.08) !important;
 }
 .wallet-adapter-modal-button-close:focus-visible {
   outline-color: var(--color-accent) !important;
@@ -306,7 +434,7 @@ select option {
   line-height: 52px !important;
 }
 .wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover {
-  background-color: rgb(0 210 255 / 0.12) !important;
+  background-color: rgb(0 210 255 / calc(0.12 * var(--glow))) !important;
 }
 .wallet-adapter-modal-list-more {
   color: var(--color-muted) !important;
@@ -323,7 +451,7 @@ select option {
   color: transparent;
   letter-spacing: -0.045em;
   line-height: 0.95;
-  filter: drop-shadow(0 6px 28px rgb(0 210 255 / 0.3));
+  filter: drop-shadow(0 6px 28px rgb(0 210 255 / calc(0.3 * var(--glow))));
 }
 
 /* The only gold glow: a faint halo behind the hero's main button. */
@@ -368,12 +496,12 @@ select option {
 .gh-range::-webkit-slider-runnable-track {
   height: 10px;
   border-radius: 9999px;
-  background: linear-gradient(90deg, var(--color-accent-deep) 0%, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.1) var(--fill, 0%));
+  background: linear-gradient(90deg, var(--color-accent-deep) 0%, var(--color-accent) var(--fill, 0%), rgb(var(--haze-rgb) / 0.1) var(--fill, 0%));
 }
 .gh-range::-moz-range-track {
   height: 10px;
   border-radius: 9999px;
-  background: rgb(255 255 255 / 0.1);
+  background: rgb(var(--haze-rgb) / 0.1);
 }
 .gh-range::-moz-range-progress {
   height: 10px;
@@ -388,7 +516,7 @@ select option {
   border-radius: 9999px;
   border: 3px solid #fff;
   background: var(--color-accent);
-  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.25), 0 4px 12px rgb(0 0 0 / 0.5);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / calc(0.25 * var(--glow))), 0 4px 12px rgb(0 0 0 / 0.5);
 }
 .gh-range::-moz-range-thumb {
   width: 22px;
@@ -396,16 +524,16 @@ select option {
   border-radius: 9999px;
   border: 3px solid #fff;
   background: var(--color-accent);
-  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.25);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / calc(0.25 * var(--glow)));
 }
 .gh-range:focus-visible {
   outline: none;
 }
 .gh-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.8);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / calc(0.8 * var(--glow)));
 }
 .gh-range:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 5px rgb(0 210 255 / 0.8);
+  box-shadow: 0 0 0 5px rgb(0 210 255 / calc(0.8 * var(--glow)));
 }
 
 /* ---------------------------------------------------------------- hero line art (GlassHouseLineArt, the photo-error fallback) */
@@ -952,7 +1080,7 @@ svg.ghh-layer {
 }
 .ghh-link {
   fill: none;
-  stroke: rgb(255 255 255 / 0.35);
+  stroke: rgb(var(--haze-rgb) / 0.35);
   stroke-width: 1.2;
   stroke-dasharray: 3 4;
   vector-effect: non-scaling-stroke;
@@ -1153,7 +1281,7 @@ svg.ghh-layer {
 /* Loans in the city grid: state is a data attribute, colors are tokens, changes fade in 250ms. */
 .gh-loan .gh-loan-body,
 .gh-loan .gh-loan-wheels {
-  fill: rgb(0 210 255 / 0.16);
+  fill: rgb(0 210 255 / calc(0.16 * var(--glow)));
   stroke: var(--color-accent);
   transition: fill 250ms ease, stroke 250ms ease;
 }
@@ -1179,7 +1307,7 @@ svg.ghh-layer {
 .gh-loan[data-s="sold"] { opacity: 0.55; }
 /* Legend swatches under the grid */
 .gh-key { display: inline-block; width: 9px; height: 9px; border-radius: 3px; border: 1.5px solid; }
-.gh-key-ok { border-color: var(--color-accent); background: rgb(0 210 255 / 0.16); }
+.gh-key-ok { border-color: var(--color-accent); background: rgb(0 210 255 / calc(0.16 * var(--glow))); }
 .gh-key-late { border: none; width: 0; height: 0; border-radius: 0; border-left: 5.5px solid transparent; border-right: 5.5px solid transparent; border-bottom: 10px solid var(--color-warn); }
 .gh-key-bad { border-color: var(--color-bad); background: rgb(244 63 94 / 0.4); }
 .gh-key-sold { border-color: rgb(148 163 184 / 0.6); background: linear-gradient(225deg, rgb(203 213 225 / 0.85) 0 35%, transparent 35%); }
@@ -1189,15 +1317,15 @@ svg.ghh-layer {
 }
 
 /* Glass tanks */
-.gh-tank-glass { fill: rgb(255 255 255 / 0.035); }
-.gh-tank-rim { fill: none; stroke: rgb(255 255 255 / 0.22); stroke-width: 1.5; transition: stroke 300ms ease; }
-.gh-tank[data-senior="1"] .gh-tank-rim { stroke: rgb(125 230 255 / 0.55); stroke-width: 2.2; }
+.gh-tank-glass { fill: rgb(var(--haze-rgb) / 0.035); }
+.gh-tank-rim { fill: none; stroke: rgb(var(--haze-rgb) / 0.22); stroke-width: 1.5; transition: stroke 300ms ease; }
+.gh-tank[data-senior="1"] .gh-tank-rim { stroke: rgb(125 230 255 / calc(0.55 * var(--glow))); stroke-width: 2.2; }
 .gh-tank[data-empty="1"] .gh-tank-rim { stroke: rgb(244 63 94 / 0.6); }
-.gh-tank[data-none="1"] .gh-tank-rim { stroke-dasharray: 5 5; stroke: rgb(255 255 255 / 0.18); }
+.gh-tank[data-none="1"] .gh-tank-rim { stroke-dasharray: 5 5; stroke: rgb(var(--haze-rgb) / 0.18); }
 .gh-tank-amount { color: var(--color-muted); }
 .gh-tank-amount[data-hit="1"] { color: var(--color-bad-fg); }
 .gh-wave {
-  fill: var(--color-accent-light);
+  fill: var(--color-liquid-top);
   fill-opacity: 0.85;
   animation: gh-wave 3.2s linear infinite;
 }
@@ -1220,8 +1348,8 @@ svg.ghh-layer {
 }
 
 /* Price line */
-.gh-price-base { stroke: rgb(255 255 255 / 0.12); stroke-dasharray: 3 4; }
-.gh-price-ghost { stroke: rgb(255 255 255 / 0.12); stroke-width: 1.5; }
+.gh-price-base { stroke: rgb(var(--haze-rgb) / 0.12); stroke-dasharray: 3 4; }
+.gh-price-ghost { stroke: rgb(var(--haze-rgb) / 0.12); stroke-width: 1.5; }
 .gh-price-line { stroke: var(--color-bad-fg); stroke-width: 2.2; stroke-linejoin: round; }
 .gh-price-dot { stroke: var(--color-bad-fg); stroke-width: 7; stroke-linecap: round; fill: none; }
 
@@ -1233,8 +1361,8 @@ svg.ghh-layer {
   position: relative;
   height: 12px;
   border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.18);
-  background: rgb(255 255 255 / 0.04);
+  border: 1px solid rgb(var(--haze-rgb) / 0.18);
+  background: rgb(var(--haze-rgb) / 0.04);
   overflow: hidden;
 }
 .gh-bank-fill {
@@ -1276,17 +1404,17 @@ svg.ghh-layer {
 .gh-range.gh-range-sm { height: 20px; }
 .gh-range.gh-range-sm::-webkit-slider-runnable-track { height: 6px; }
 .gh-range.gh-range-sm::-moz-range-track { height: 6px; }
-.gh-range.gh-range-sm::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -5px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / 0.25); }
-.gh-range.gh-range-sm::-moz-range-thumb { width: 12px; height: 12px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / 0.25); }
-.gh-range.gh-range-sm:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / 0.85); }
-.gh-range.gh-range-sm:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / 0.85); }
+.gh-range.gh-range-sm::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -5px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / calc(0.25 * var(--glow))); }
+.gh-range.gh-range-sm::-moz-range-thumb { width: 12px; height: 12px; border-width: 2px; box-shadow: 0 0 0 3px rgb(0 210 255 / calc(0.25 * var(--glow))); }
+.gh-range.gh-range-sm:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / calc(0.85 * var(--glow))); }
+.gh-range.gh-range-sm:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(0 210 255 / calc(0.85 * var(--glow))); }
 
 /* Sticky control strip: right under the sticky top bar on lg, at the top on smaller screens. */
 .gh-strip {
   position: sticky;
   top: 0;
   z-index: 15;
-  background: rgb(11 17 32 / 0.82);
+  background: rgb(var(--frost-rgb) / 0.82);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -1364,13 +1492,13 @@ svg.ghh-layer {
   transition: opacity 600ms ease;
 }
 @media (max-width: 639px) { .gh-fx-badge { right: auto; left: 0; } }
-.gh-fx-badge-warn { color: var(--color-warn); border: 1px solid rgb(251 146 60 / 0.5); background: rgb(11 17 32 / 0.9); }
+.gh-fx-badge-warn { color: var(--color-warn); border: 1px solid rgb(251 146 60 / 0.5); background: rgb(var(--frost-rgb) / 0.9); }
 .gh-fx-badge-hit { color: #fecdd3; border: 1px solid rgb(244 63 94 / 0.8); background: rgb(80 14 30 / 0.95); box-shadow: 0 0 14px rgb(244 63 94 / 0.55); }
 [data-fx="1"] .gh-fx-badge-warn { opacity: 1; }
 [data-fx="2"] .gh-fx-badge-hit { opacity: 1; }
 /* Text stays readable over the flames: solid plates under the numbers once a panel burns. */
 .gh-fx-solid { transition: background-color 600ms ease; }
-[data-fx="2"] .gh-fx-solid { background-color: rgb(11 17 32 / 0.9); }
+[data-fx="2"] .gh-fx-solid { background-color: rgb(var(--frost-rgb) / 0.9); }
 /* Defaulted homes glow like embers (slow, 0.3 Hz); sold ones stay dim. */
 [data-fx="2"] .gh-loan[data-s="defaulted"] .gh-loan-body { fill: rgb(249 115 22 / 0.55); stroke: #fb7185; }
 [data-fx="2"][data-anim="1"] .gh-loan[data-s="defaulted"] { animation: gh-ember 1.6s ease-in-out infinite alternate; }
@@ -1384,14 +1512,90 @@ svg.ghh-layer {
   inset: 0;
   z-index: 80;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 55%, rgb(244 63 94 / 0.9) 100%);
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(var(--vignette-rgb) / 0.9) 100%);
   opacity: 0;
   transition: opacity 600ms ease;
 }
-.gh-vignette[data-on="1"] { opacity: 0.12; }
+.gh-vignette[data-on="1"] { opacity: var(--vignette-rest); }
 .gh-vignette[data-pulse="1"] { animation: gh-pulse 1.2s ease-out 1 forwards; }
 @keyframes gh-pulse {
   0% { opacity: 0; }
-  18% { opacity: 0.35; }
-  100% { opacity: 0.12; }
+  18% { opacity: var(--vignette-pulse); }
+  100% { opacity: var(--vignette-rest); }
 }
+
+/* ---------------------------------------------------------------- light mode: component overrides */
+/* Light is white glass on a pale page: no glows, a soft card shadow, slate edges, deep-cyan text. */
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(60rem 32rem at 50% -12rem, rgb(0 210 255 / 0.1), transparent 70%),
+    radial-gradient(42rem 32rem at calc(100% + 8rem) 30%, rgb(14 116 144 / 0.05), transparent 70%);
+}
+[data-theme="light"] ::selection { background: rgb(8 145 178 / 0.22); color: var(--color-ink); }
+[data-theme="light"] .pane {
+  background: rgb(255 255 255 / 0.85);
+  border-color: var(--color-line);
+  box-shadow: var(--shadow-card);
+}
+[data-theme="light"] .pane:hover { border-color: var(--color-line-hover); }
+[data-theme="light"] .pane-highlight {
+  background: linear-gradient(180deg, rgb(8 145 178 / 0.08), rgb(8 145 178 / 0.02)), rgb(255 255 255 / 0.9);
+  border-color: rgb(14 116 144 / 0.3);
+}
+[data-theme="light"] .pane-glow { box-shadow: 0 0 0 1px rgb(14 116 144 / 0.18), 0 12px 32px -14px rgb(14 116 144 / 0.25); }
+[data-theme="light"] .pane-flat { border-color: var(--color-line); background: var(--color-surface-2); }
+[data-theme="light"] .btn-gold { color: var(--color-gold-ink); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 6px 16px -10px rgb(180 83 9 / 0.6); }
+[data-theme="light"] .btn-gold:hover:not(:disabled) { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), 0 8px 20px -10px rgb(180 83 9 / 0.7); }
+[data-theme="light"] .btn-accent { color: var(--color-accent-ink); background: #ecfeff; box-shadow: inset 0 0 0 1px rgb(14 116 144 / 0.45); }
+[data-theme="light"] .btn-accent:hover:not(:disabled) { background: #cffafe; box-shadow: inset 0 0 0 1px rgb(14 116 144 / 0.7); }
+/* Selected chips and tabs: deep cyan fill, white text (5.4:1). */
+[data-theme="light"] .fill-accent { color: #ffffff; background: #0e7490; box-shadow: none; }
+/* The one gold figure: darker gold on light so it keeps 4.5:1 (#B45309 is 5.0:1 on white). */
+[data-theme="light"] .text-gold-gradient { background-image: linear-gradient(100deg, #b45309 0%, #c2410c 100%); }
+[data-theme="light"] .text-gradient { background-image: linear-gradient(100deg, #0e7490 0%, #0891b2 100%); }
+[data-theme="light"] .hero-wordmark { background-image: linear-gradient(100deg, #0e7490 0%, #0891b2 100%); filter: none; }
+[data-theme="light"] .loss-hatch { background-image: repeating-linear-gradient(135deg, rgb(190 18 60 / 0.75) 0 4px, rgb(190 18 60 / 0.18) 4px 8px); }
+[data-theme="light"] select option { background: #ffffff; color: var(--color-ink); }
+[data-theme="light"] :focus-visible { outline-color: #0e7490; }
+[data-theme="light"] .gh-range::-webkit-slider-thumb { border-color: #ffffff; box-shadow: 0 0 0 4px rgb(8 145 178 / 0.2), 0 2px 6px rgb(15 23 42 / 0.25); }
+[data-theme="light"] .gh-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(14 116 144 / 0.8); }
+/* Wallet adapter: white button and modal, dark text. */
+[data-theme="light"] .wallet-adapter-button-trigger { background: #ffffff !important; box-shadow: inset 0 0 0 1px rgb(14 116 144 / 0.45); color: var(--color-ink) !important; }
+[data-theme="light"] .wallet-adapter-button-trigger:not([disabled]):hover { background: #ecfeff !important; }
+[data-theme="light"] .wallet-adapter-dropdown-list { background: #ffffff !important; border-color: var(--color-line); box-shadow: 0 16px 40px -16px rgb(15 23 42 / 0.25) !important; }
+[data-theme="light"] .wallet-adapter-dropdown-list-item { color: var(--color-ink) !important; }
+[data-theme="light"] .wallet-adapter-dropdown-list-item:not([disabled]):hover { background-color: #ecfeff !important; }
+[data-theme="light"] .wallet-adapter-modal-overlay { background: rgb(15 23 42 / 0.35) !important; }
+[data-theme="light"] .wallet-adapter-modal-wrapper { background: #ffffff !important; border-color: var(--color-line); box-shadow: 0 30px 80px -24px rgb(15 23 42 / 0.35) !important; color: var(--color-ink); }
+[data-theme="light"] .wallet-adapter-modal-button-close { background: #f1f5f9 !important; }
+[data-theme="light"] .wallet-adapter-modal-button-close svg { fill: #475569; }
+[data-theme="light"] .wallet-adapter-modal-list .wallet-adapter-button { color: var(--color-ink) !important; }
+[data-theme="light"] .wallet-adapter-modal-list .wallet-adapter-button:not([disabled]):hover { background-color: #ecfeff !important; }
+
+/* Theme switch: colors ease for 150 ms (only while switching; never with reduced motion). */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease !important;
+  }
+}
+
+/* Light: active menu items are deep-cyan text on a pale cyan fill. */
+[data-theme="light"] .nav-active { background: #ecfeff; color: var(--color-accent-ink); box-shadow: inset 0 0 0 1px rgb(14 116 144 / 0.22); }
+[data-theme="light"] .tab-active { background: #cffafe; box-shadow: inset 0 0 0 1px rgb(14 116 144 / 0.3); color: var(--color-accent-ink); }
+/* Light: the landing picture stays dark, framed as a night window. */
+html[data-theme="light"] .hero-night {
+  background: radial-gradient(120% 80% at 70% 0%, #16264a, #0b1120 70%);
+  border-radius: 28px;
+  padding: 14px;
+  box-shadow: 0 30px 60px -30px rgb(15 23 42 / 0.55), 0 0 0 1px rgb(15 23 42 / 0.08);
+}
+/* Light: /stress grid icons and tank rims in deep cyan, the hit badge on a pale tint. */
+[data-theme="light"] .gh-loan .gh-loan-body { fill: rgb(8 145 178 / 0.12); stroke: #0891b2; }
+[data-theme="light"] .gh-loan .gh-loan-wheels { fill: #0891b2; }
+[data-theme="light"] .gh-tank[data-senior="1"] .gh-tank-rim { stroke: #0891b2; }
+[data-theme="light"] .gh-fx-badge-hit { color: #be123c; background: #fff1f2; border-color: rgb(190 18 60 / 0.6); box-shadow: 0 0 10px rgb(190 18 60 / 0.25); }
+[data-theme="light"] .gh-fx-smoke { background: radial-gradient(60% 70% at 30% 0%, rgb(71 85 105 / 0.16), transparent 70%), radial-gradient(50% 60% at 75% 10%, rgb(71 85 105 / 0.12), transparent 70%); background-size: 140% 100%; }
+[data-theme="light"] .gh-fx-cracks path { stroke: rgb(127 29 29 / 0.45); filter: none; }

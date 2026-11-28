@@ -76,7 +76,7 @@ export function SharePriceChart({ points, height = 260 }: { points: SharePricePo
             strokeWidth={2.4}
             fill={`url(#${id}-fill)`}
             dot={false}
-            activeDot={{ r: 4, fill: CHART.homeLight, stroke: "#0b1120", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: CHART.homeLight, stroke: "var(--color-frost)", strokeWidth: 2 }}
             isAnimationActive={false}
           />
         </AreaChart>

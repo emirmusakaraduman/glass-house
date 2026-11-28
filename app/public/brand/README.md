@@ -25,9 +25,11 @@ Copies of the four PNGs are in `pitch-deck/project/assets/`.
 
 ## Rules
 
-- **Always on a dark background:** `#0B1120` (navy) or `#131C31` (glass surface). Never on white
-  or a light color.
-- **Never recolor the logo.** The cyan (`#00D2FF` to `#7BE8FF`) is part of it. No gold (`#F59E0B`)
+- **The glowing PNGs and the `glass` mark go on dark only:** `#0B1120` (navy) or `#131C31` (glass
+  surface). Never on white or a light color.
+- **On a light background (light mode) use the solid SVG mark in `#0E7490`.** `LogoMark` switches by
+  itself (CSS variables `--logo-glass` / `--logo-solid` in `globals.css`); the wordmark takes the text color.
+- **Never recolor the logo** beyond these two: cyan (`#00D2FF` to `#7BE8FF`) on dark, solid `#0E7490` on light. No gold (`#F59E0B`)
   in or on the logo; gold stays for the one main action button.
 - **Clear space:** keep at least a quarter of the emblem's height empty on every side.
 - **Below 24 px use the `solid` SVG**, never a scaled-down PNG or the `glass` variant.

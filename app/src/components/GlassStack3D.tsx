@@ -20,16 +20,16 @@ function Face({ style, used, className }: { style: CSSProperties; used: number; 
   return (
     <div
       className={cx(
-        "absolute left-0 top-0 overflow-hidden border border-accent-light/60 bg-[linear-gradient(135deg,rgb(125_230_255/0.16),rgb(0_210_255/0.06))] shadow-[inset_0_0_18px_rgb(0_210_255/0.35),0_0_16px_rgb(0_210_255/0.35)]",
+        "absolute left-0 top-0 overflow-hidden border border-[var(--stack-edge-strong)] bg-[image:var(--stack-face)] shadow-[inset_0_0_18px_rgb(0_210_255/calc(0.35*var(--glow))),0_0_16px_rgb(0_210_255/calc(0.35*var(--glow)))]",
         className,
       )}
       style={style}
     >
       {/* what's left: cyan glass fill */}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(0_210_255/0.38),rgb(125_230_255/0.22))]" />
+      <div className="absolute inset-0 bg-[image:var(--stack-fill)]" />
       {/* what provisions have eaten, from the side the loss enters */}
       {used > 0 ? <div className="loss-hatch absolute inset-y-0 left-0" style={{ width: `${Math.min(1, used) * 100}%` }} /> : null}
-      <div className="absolute inset-x-0 top-0 h-px bg-white/50" />
+      <div className="absolute inset-x-0 top-0 h-px bg-haze/50" />
     </div>
   );
 }

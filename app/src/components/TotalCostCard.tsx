@@ -11,7 +11,7 @@ import { Row, cx } from "./ui";
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-[12px] border border-white/[0.08] bg-white/[0.03] px-4 py-2.5">
+    <section className="rounded-[12px] border border-haze/[0.08] bg-haze/[0.03] px-4 py-2.5">
       <h4 className="dense pb-1 pt-1 text-[12.5px] font-semibold uppercase tracking-wider text-muted">{title}</h4>
       <div className="text-[15px]">{children}</div>
     </section>
@@ -24,7 +24,7 @@ export function TotalCostCard({ price, downPayment, pool }: { price: number; dow
     <div className="space-y-3">
       <div>
         <div className="dense text-[13px] text-muted">Monthly installment, fixed</div>
-        <div className="display num text-gradient mt-1 text-[44px] drop-shadow-[0_6px_24px_rgb(0_210_255/0.45)]">{usd(c.installment, { cents: true })}</div>
+        <div className="display num text-gradient mt-1 text-[44px] drop-shadow-[0_6px_24px_rgb(0_210_255/calc(0.45*var(--glow)))]">{usd(c.installment, { cents: true })}</div>
         <p className="mt-1 text-sm text-muted">
           First month: {usd(c.firstMonthInterest, { cents: true })} interest, {usd(c.firstMonthPrincipal, { cents: true })} principal
         </p>
@@ -41,7 +41,7 @@ export function TotalCostCard({ price, downPayment, pool }: { price: number; dow
         <Row k="Down payment" v={usd(c.downPayment)} />
         <Row k={`Origination fee, ${pct(pool.originationFee, 0)} once`} v={usd(c.fee, { cents: true })} />
         <Row k={`Collateral, ${pool.collateralInstallments} installments`} v={usd(c.collateral, { cents: true })} />
-        <div className="mt-1 border-t border-white/[0.08] pt-1">
+        <div className="mt-1 border-t border-haze/[0.08] pt-1">
           <Row k="Cash you need at closing" v={usd(c.cashAtClosing, { cents: true })} strong />
         </div>
         <p className="pb-1 text-[13px] text-muted">Collateral is returned when the loan is paid off. Paying off early has no penalty.</p>
@@ -64,7 +64,7 @@ export function AmortizationTable({ loan, pool, heading = true }: { loan: number
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         {heading ? <h3 className="title text-lg">Amortization</h3> : <span />}
-        <div className="inline-flex rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm" role="group" aria-label="Table period">
+        <div className="inline-flex rounded-full border border-haze/10 bg-haze/[0.04] p-1 text-sm" role="group" aria-label="Table period">
           {[
             { v: false, l: "By year" },
             { v: true, l: "By month" },
@@ -75,7 +75,7 @@ export function AmortizationTable({ loan, pool, heading = true }: { loan: number
           ))}
         </div>
       </div>
-      <div className="max-h-[420px] overflow-auto rounded-[12px] border border-white/10">
+      <div className="max-h-[420px] overflow-auto rounded-[12px] border border-haze/10">
         <table className="w-full min-w-[480px] text-[14px]">
           <thead className="sticky top-0 bg-night">
             <tr className="dense text-left text-[13px] text-muted">
@@ -89,7 +89,7 @@ export function AmortizationTable({ loan, pool, heading = true }: { loan: number
           <tbody className="num">
             {monthly
               ? rows.map((r) => (
-                  <tr key={r.month} className="border-t border-white/[0.06]">
+                  <tr key={r.month} className="border-t border-haze/[0.06]">
                     <td className="px-3 py-1.5">{r.month}</td>
                     <td className="px-3 py-1.5 text-right">{usd(r.payment, { cents: true })}</td>
                     <td className="px-3 py-1.5 text-right">{usd(r.interest, { cents: true })}</td>
@@ -98,7 +98,7 @@ export function AmortizationTable({ loan, pool, heading = true }: { loan: number
                   </tr>
                 ))
               : years.map((y) => (
-                  <tr key={y.year} className="border-t border-white/[0.06]">
+                  <tr key={y.year} className="border-t border-haze/[0.06]">
                     <td className="px-3 py-1.5">{y.year}</td>
                     <td className="px-3 py-1.5 text-right">{usd(y.paid)}</td>
                     <td className="px-3 py-1.5 text-right">{usd(y.interest)}</td>

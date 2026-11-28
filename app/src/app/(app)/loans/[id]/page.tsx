@@ -113,7 +113,7 @@ export default function LoanPage() {
       <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <h2 className="display num text-gradient text-5xl sm:text-6xl">{loanLabel(loan)}</h2>
         <StatusBadge status={loan.status} approved={loan.appraisal !== null} />
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-0.5 text-[13px] font-semibold">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-haze/15 bg-haze/[0.05] px-2.5 py-0.5 text-[13px] font-semibold">
           <PoolIcon className="h-3.5 w-3.5 text-steel" aria-hidden />
           {p.name}
         </span>
@@ -156,8 +156,8 @@ export default function LoanPage() {
                 centerValue={`${loan.paidInstallments} / ${loan.termMonths}`}
                 centerLabel="installments paid"
                 slices={[
-                  { name: "Paid", value: loan.paidInstallments, color: "#00d2ff" },
-                  { name: "Left", value: Math.max(0, loan.termMonths - loan.paidInstallments), color: "rgb(255 255 255 / 0.1)" },
+                  { name: "Paid", value: loan.paidInstallments, color: "var(--color-chart-home)" },
+                  { name: "Left", value: Math.max(0, loan.termMonths - loan.paidInstallments), color: "rgb(var(--haze-rgb) / 0.1)" },
                 ]}
               />
               <div className="grid grid-cols-2 gap-x-6 gap-y-5">
@@ -241,7 +241,7 @@ export default function LoanPage() {
               const ev = EVENT[e.kind];
               return (
                 <li key={i} className="relative flex gap-3 pb-5 last:pb-0">
-                  {i < all.length - 1 ? <span className="absolute bottom-0 left-[13px] top-8 w-px bg-white/10" aria-hidden /> : null}
+                  {i < all.length - 1 ? <span className="absolute bottom-0 left-[13px] top-8 w-px bg-haze/10" aria-hidden /> : null}
                   <IconBadge icon={ev.icon} size="sm" tone={ev.tone} />
                   <div className="min-w-0 text-sm">
                     <div className="font-semibold">{ev.text}</div>
@@ -442,7 +442,7 @@ function RolePanel(props: {
 
 function RoleCard({ icon, title, role, active, children }: { icon: LucideIcon; title: string; role: string; active: boolean; children: React.ReactNode }) {
   return (
-    <div className={cx("rounded-[12px] border p-4", active ? "border-accent-light/50 bg-accent/[0.12] shadow-[0_0_24px_-10px_rgb(0_210_255/0.8)]" : "border-white/[0.08] bg-white/[0.02]")}>
+    <div className={cx("rounded-[12px] border p-4", active ? "border-accent-light/50 bg-accent/[0.12] shadow-[0_0_24px_-10px_rgb(0_210_255/calc(0.8*var(--glow)))]" : "border-haze/[0.08] bg-haze/[0.02]")}>
       <div className="flex items-start gap-2.5">
         <IconBadge icon={icon} size="sm" tone={active ? "accent" : "indigo"} />
         <div className="min-w-0">

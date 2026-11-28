@@ -41,13 +41,13 @@ export function LossStack({ layers, caption }: { layers: LossLayer[]; caption?: 
                   className={cx(
                     "relative overflow-hidden rounded-[8px] border backdrop-blur",
                     l.senior
-                      ? "h-6 border-accent-light/55 bg-[linear-gradient(90deg,rgb(0_210_255/0.55),rgb(125_230_255/0.35))] shadow-[0_0_18px_-4px_rgb(0_210_255/0.6)]"
-                      : "h-4 border-accent-light/30 bg-[linear-gradient(90deg,rgb(0_210_255/0.3),rgb(125_230_255/0.16))]",
+                      ? "h-6 border-[var(--stack-edge)] bg-[image:var(--stack-senior)] shadow-[0_0_18px_-4px_rgb(0_210_255/calc(0.6*var(--glow)))]"
+                      : "h-4 border-[var(--stack-edge-soft)] bg-[image:var(--stack-layer)]",
                   )}
                   role="img"
                   aria-label={`${l.name}: ${Math.round(usedShare * 100)}% used`}
                 >
-                  <div className="absolute inset-x-0 top-0 h-[40%] bg-white/[0.12]" aria-hidden />
+                  <div className="absolute inset-x-0 top-0 h-[40%] bg-haze/[0.12]" aria-hidden />
                   {usedShare > 0 ? <div className="loss-hatch absolute inset-y-0 left-0 transition-[width] duration-700" style={{ width: `${usedShare * 100}%` }} /> : null}
                 </div>
               </div>

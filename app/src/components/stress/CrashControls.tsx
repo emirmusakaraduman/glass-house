@@ -51,7 +51,7 @@ function PoolToggle({ value, onChange }: { value: Pool; onChange: (p: Pool) => v
     { v: "vehicle" as const, icon: Car, label: "Car pool" },
   ];
   return (
-    <div role="group" aria-label="Pool" className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-0.5">
+    <div role="group" aria-label="Pool" className="inline-flex shrink-0 rounded-full border border-haze/10 bg-haze/[0.04] p-0.5">
       {options.map((o) => (
         <button
           key={o.v}
@@ -59,7 +59,7 @@ function PoolToggle({ value, onChange }: { value: Pool; onChange: (p: Pool) => v
           aria-pressed={value === o.v}
           title={o.label}
           onClick={() => onChange(o.v)}
-          className={cx("inline-flex h-9 w-10 items-center justify-center rounded-full transition-colors", value === o.v ? "fill-accent" : "text-muted hover:bg-white/[0.06] hover:text-ink")}
+          className={cx("inline-flex h-9 w-10 items-center justify-center rounded-full transition-colors", value === o.v ? "fill-accent" : "text-muted hover:bg-haze/[0.06] hover:text-ink")}
         >
           <o.icon className="h-[18px] w-[18px]" aria-hidden />
           <span className="sr-only">{o.label}</span>
@@ -87,7 +87,7 @@ function EffectsButton({ on, onToggle }: { on: boolean; onToggle: () => void }) 
       title={on ? "Effects on (flames, shake, pulse)" : "Effects off: still states only"}
       className={cx(
         "inline-flex h-9 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[12px] font-semibold transition-colors",
-        on ? "border-warn/50 bg-warn/10 text-warn" : "border-white/15 text-muted hover:text-ink",
+        on ? "border-warn/50 bg-warn/10 text-warn" : "border-haze/15 text-muted hover:text-ink",
       )}
     >
       <Flame className="h-4 w-4" aria-hidden />
@@ -117,7 +117,7 @@ function MiniSlider({ s }: { s: SliderSpec }) {
   const fill = ((s.value - s.min) / (s.max - s.min)) * 100;
   const markAt = s.marker ? ((s.marker.at - s.min) / (s.max - s.min)) * 100 : null;
   return (
-    <label className="group relative block min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 pb-0.5 pt-1">
+    <label className="group relative block min-w-0 rounded-xl border border-haze/[0.08] bg-haze/[0.03] px-3 pb-0.5 pt-1">
       <span className="flex items-baseline justify-between gap-2">
         <span className="truncate text-[12px] text-muted">{s.label}</span>
         <span className="num shrink-0 text-[15px] font-bold leading-tight text-steel">
@@ -156,7 +156,7 @@ function MiniSlider({ s }: { s: SliderSpec }) {
 
 function SpeedPicker({ engine }: { engine: TimelineEngine }) {
   return (
-    <div role="group" aria-label="Speed" className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/[0.04] p-0.5">
+    <div role="group" aria-label="Speed" className="inline-flex shrink-0 rounded-full border border-haze/10 bg-haze/[0.04] p-0.5">
       {SPEEDS.map((s) => (
         <button
           key={s}
@@ -321,7 +321,7 @@ export function ControlStrip({
   );
 
   return (
-    <div ref={stripRef} className={cx("rounded-2xl border border-white/10 shadow-[0_8px_24px_rgb(0_0_0/0.35)]", present ? "bg-night/70" : "gh-strip")}>
+    <div ref={stripRef} className={cx("rounded-2xl border border-haze/10 shadow-[0_8px_24px_rgb(0_0_0/0.35)]", present ? "bg-night/70" : "gh-strip")}>
       {present ? (
         wide
       ) : (
@@ -344,7 +344,7 @@ export function ControlStrip({
                 Settings
               </button>
             </div>
-            <div id={panelId} hidden={!open} className="max-h-[70vh] space-y-3 overflow-y-auto border-t border-white/10 p-3">
+            <div id={panelId} hidden={!open} className="max-h-[70vh] space-y-3 overflow-y-auto border-t border-haze/10 p-3">
               <div className="flex items-center gap-2">
                 <PoolToggle value={pool} onChange={onPool} />
                 {pool === "vehicle" ? <EstimateBadge /> : null}
