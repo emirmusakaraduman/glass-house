@@ -81,5 +81,5 @@ terms allow it can be added later in configuration, without code changes.
 
 - Repository: https://github.com/emirmusakaraduman/glass-house
 - Demo video (under 3 minutes): **[CONFIRM]**
-- Live app: **[CONFIRM]**
+- Live app: https://glasshouse0.netlify.app
 - License: MIT

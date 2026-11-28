@@ -21,7 +21,7 @@ the first loss. Two isolated pools (house, vehicle) run from a single Anchor pro
   `scripts/verify-devnet.ts --execute` passes against them.
   Deploy steps: [docs/DEPLOY.md](docs/DEPLOY.md).
 - Demo video: **[TODO: link]**
-- Live frontend: **[TODO: URL]**
+- Live frontend: https://glasshouse0.netlify.app
 
 ## The idea in four sentences
 
