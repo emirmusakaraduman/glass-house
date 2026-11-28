@@ -224,6 +224,13 @@ See [docs/DEPLOY.md](docs/DEPLOY.md). Scripts default to a dry run and only writ
 - **No fuzz or property-based tests.** Correctness rests on fixed-case unit tests, LiteSVM and
   local-validator integration tests, the invariant checks run after every instruction, and the
   stress simulation. Randomised input testing of `math.rs` and `nav.rs` is future work.
+- **No Blinks and no payment-history badge** (both stretch goals, not built). Repayment and deposits
+  go through the web app and a wallet; there is no portable, transferable payment record.
+- **The reserve fund has no cap.** Once it passes its target (3% of remaining principal in the
+  design) the excess is not returned to investors; the reserve only grows from fees and interest.
+- **The listing finder runs on sample data.** The Firecrawl route is built and switched off: the two
+  Panama listing sites we read forbid automated access in their terms, so we do not scrape them.
+  The finder shows hand-made listings under a visible "Sample data" label.
 - **First-loss capital is assumed.** In the demo the platform supplies it. The pool's first-loss
   vault (350k for a 7M pool) costs more than the yearly platform income (about 56k); funding it
   in a real product is an open question.
