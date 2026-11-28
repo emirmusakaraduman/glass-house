@@ -40,7 +40,12 @@ export default function TransparencyPage() {
     if (!data) return null;
     const onChain = data.loans.filter((l) => !["Rejected", "Cancelled"].includes(l.status));
     const wallets = new Set(data.loans.filter((l) => LIVE_STATUSES.includes(l.status)).map((l) => l.borrower));
-    const repaid = data.loans.flatMap((l) => l.events).filter((e) => e.kind === "repaid").reduce((s, e) => s + (e.amount ?? 0), 0);
+    // Recorded payments when the client has a history (mock). The chain client has no indexer and returns no
+    // events, so there the total is the loan's own counters: paid installments times the installment.
+    const repaid = data.loans.reduce((sum, l) => {
+      const events = l.events.filter((e) => e.kind === "repaid");
+      return sum + (events.length > 0 ? events.reduce((s, e) => s + (e.amount ?? 0), 0) : l.paidInstallments * l.installment);
+    }, 0);
     return { onChain: onChain.length, wallets: wallets.size, repaid };
   }, [data]);
 
