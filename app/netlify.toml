@@ -8,6 +8,19 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Public devnet addresses only (same as deployments/devnet.json); no secrets belong here.
+  # NEXT_PUBLIC_* values are baked into the browser bundle at build time. They live in this file
+  # so a missing Netlify UI variable cannot silently leave the site on mock data.
+  NEXT_PUBLIC_DATA_SOURCE = "chain"
+  NEXT_PUBLIC_SOLANA_CLUSTER = "devnet"
+  NEXT_PUBLIC_RPC_URL = "https://api.devnet.solana.com"
+  NEXT_PUBLIC_PROGRAM_ID = "HLKhCx1dFCCH3oTaaQEBEXZ5PShftueTFTEmKVZFyrP2"
+  NEXT_PUBLIC_USDC_MINT = "8KPWZb15PSYmW7vpE66dSGxNGaEQ21JXGSd7QmwLxPuW"
+  NEXT_PUBLIC_HOUSE_POOL = "3rbdkVxXQfZmXMWn1dVXZ5hPE2ToWrvA5USH4EwsxZPz"
+  NEXT_PUBLIC_VEHICLE_POOL = "Ef1qTy79zdLTSxNaTm5Bb4Lb82SyoqnWREDu6JDVzu6m"
+  NEXT_PUBLIC_SITE_URL = "https://glasshouse0.netlify.app"
+  FIRECRAWL_LIVE_CITIES = "Panama City"
+  FIRECRAWL_TIMEOUT_MS = "8000"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
