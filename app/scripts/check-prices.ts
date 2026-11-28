@@ -20,6 +20,11 @@ const cases: [unknown, number | null][] = [
   ["B/. 95,000.00", 95_000],
   ["$ 100,500", 100_500],
   ["USD 20.300", 20_300],
+  // Dealer and broker formats seen on the live sources
+  ["Desde B/. 12,088.86", 12_088.86],
+  ["From $95,000", 95_000],
+  ["Precio: $314,845", 314_845],
+  ["$300,000", 300_000],
   ["12.5k", 12_500],
   [95000, 95_000],
   ["Consultar", null],

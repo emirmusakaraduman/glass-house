@@ -147,8 +147,10 @@ export function ListingCard({ listing, maxPrice, onApply }: { listing: ListingWi
   const buffered = closingCashWithBuffer(listing.price, p);
   const tooOld = listing.type === "vehicle" && listing.year !== null && new Date().getFullYear() - listing.year > MAX_VEHICLE_AGE_YEARS;
   const overBudget = listing.price > maxPrice;
-  const blocked = tooOld ? `Not eligible: over ${MAX_VEHICLE_AGE_YEARS} years old` : overBudget ? "Above your limit" : null;
+  const blocked = tooOld ? `Not eligible: over ${MAX_VEHICLE_AGE_YEARS} years old` : overBudget ? `${usd(listing.price - maxPrice)} above your budget` : null;
   const sample = listing.source === "sample";
+  // Live listings name their source and when they were fetched; they show no photo (the placeholder).
+  const fetched = sample ? null : new Date(listing.fetchedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   const place = [listing.district, listing.city].filter(Boolean).join(", ");
 
   return (
@@ -168,6 +170,13 @@ export function ListingCard({ listing, maxPrice, onApply }: { listing: ListingWi
       </div>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
+        {fetched ? (
+          <p className="mb-2 inline-flex flex-wrap items-center gap-x-1.5 text-[12px] font-semibold text-ok">
+            <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
+            Live from {listing.source}
+            <span className="font-normal text-muted">· fetched {fetched}</span>
+          </p>
+        ) : null}
         <div className="num text-[26px] font-extrabold leading-none tracking-tight">{usd(listing.price)}</div>
         <h3 className="mt-2 text-[15px] font-semibold leading-snug">{listing.title}</h3>
         {place ? (
@@ -227,7 +236,7 @@ export function ListingCard({ listing, maxPrice, onApply }: { listing: ListingWi
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
           {listing.url ? (
             <a href={listing.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-steel underline-offset-2 hover:text-ink hover:underline">
-              Open listing <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              {sample ? "Open listing" : `View on ${listing.source}`} <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             </a>
           ) : (
             <span />

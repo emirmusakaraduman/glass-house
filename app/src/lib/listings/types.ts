@@ -61,6 +61,10 @@ export interface ListingsResponse {
   note: string | null;
   query: { type: AssetType; city: string; minPrice: number; maxPrice: number };
   listings: ListingWithComp[];
+  /** Live only, when nothing live is under the budget: the closest listings above it (at most 3). */
+  aboveBudget: ListingWithComp[];
+  /** Live only, when nothing live is under the budget: sample listings under it, shown apart. */
+  samples: ListingWithComp[];
 }
 
 export const CITIES: Record<AssetType, string[]> = {
