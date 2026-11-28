@@ -309,6 +309,16 @@ export default function FinderPage() {
               <Skeleton key={i} className="h-[440px] rounded-[20px]" />
             ))}
           </div>
+        ) : all.length === 0 && res?.source === "live" ? (
+          <LiveNothingUnder
+            res={res}
+            maxPrice={maxPrice}
+            noun={noun}
+            onApply={(l) => {
+              saveSelection({ type, city, budget, listing: l });
+              router.push("/apply");
+            }}
+          />
         ) : all.length === 0 && res ? (
           <EmptyState>
             Nothing under {usd(maxPrice)} in {city}. More savings raise the limit fastest; you can also try the other city.
@@ -412,6 +422,45 @@ function MaxPrice({ value }: { value: number }) {
         The most you can pay: {usd(value)}
       </span>
     </>
+  );
+}
+
+/**
+ * Live results came back but none is under the budget: say so, show the three closest live
+ * listings above it (Apply off, with the gap), and keep the sample listings in their own section.
+ */
+function LiveNothingUnder({ res, maxPrice, noun, onApply }: { res: ListingsResponse; maxPrice: number; noun: string; onApply: (l: ListingWithComp) => void }) {
+  return (
+    <div className="space-y-6">
+      <Note>No live listings under {usd(maxPrice)} right now.</Note>
+      {res.aboveBudget.length > 0 ? (
+        <section aria-labelledby="above-title" className="space-y-3">
+          <h3 id="above-title" className="title text-xl">
+            Closest above your budget
+          </h3>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {res.aboveBudget.map((l) => (
+              <ListingCard key={l.id} listing={l} maxPrice={maxPrice} onApply={() => onApply(l)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {res.samples.length > 0 ? (
+        <section aria-labelledby="samples-title" className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 id="samples-title" className="title text-xl">
+              Example {noun} under {usd(maxPrice)}
+            </h3>
+            <SampleDataBadge />
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {res.samples.map((l) => (
+              <ListingCard key={l.id} listing={l} maxPrice={maxPrice} onApply={() => onApply(l)} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }
 

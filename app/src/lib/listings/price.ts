@@ -43,6 +43,8 @@ export function parsePrice(v: unknown): number | null {
   if (typeof v !== "string") return null;
 
   let s = v.toLowerCase().replace(/\s+/g, "");
+  // Lead-in words dealers put before the figure: "Desde B/. 12,088.86", "From $95,000", "Precio: $…".
+  s = s.replace(/^(desde|apartirde|from|precio|price|venta|sale)[:.]?/, "");
   // Currency words and symbols; "b/." before "$" so the dot isn't read as a decimal mark.
   s = s.replace(/^(us\$|usd\$?|b\/\.?|pab|\$)+/, "").replace(/(usd|us\$|pab|dólares|dolares|balboas?)$/, "");
   const m = /^([0-9][0-9.,]*)(k|mil|m|mm|millones?)?$/.exec(s);

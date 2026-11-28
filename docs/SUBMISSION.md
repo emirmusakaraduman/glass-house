@@ -64,18 +64,27 @@ route (`/api/listings`); income and savings never leave the browser. Choosing a 
 the `apply_loan` form with its price, and the listing URL is never written on-chain: only a salted
 hash goes on-chain.
 
-The server route is built to call Firecrawl's scrape endpoint with a JSON schema for houses or
-cars and a prompt that forbids inventing listings. It keeps only items whose link really appears
-on the scraped page, reads Panama price formats such as "$ 95,000", "B/. 95.000" and "US$95k"
-(covered by `npm run check:prices`), caches results for 15 minutes, and falls back to sample data
-on any error or after 8 seconds. The API key stays on the server, and live search is limited to
-Panama City.
+For homes in Panama City the route calls Firecrawl's scrape endpoint on one page of Panama Equity
+(panamaequity.com/property-city/panama-city/), with a JSON schema for listings and a prompt that
+forbids inventing any. We checked the site first: its robots.txt allows that page and the listing
+pages and asks for a 10-second crawl delay, and it publishes no terms of use (the privacy policy
+has nothing against automated access). The route keeps only items whose link really appears on the
+scraped page, drops rentals, and reads Panama price formats such as "$ 95,000", "B/. 95.000" and
+"US$95k" (covered by `npm run check:prices`).
 
-No live source is switched on. We read the terms of the two Panama sites we planned to use, and
-both forbid automated access: Encuentra24 (section 11 bans bots, crawlers and scraping) and
-Compreoalquile (section 1.5.1 bans any tool other than the site's own search, and copying its
-data). So the demo shows hand-made listings with a visible "Sample data" label, and a site whose
-terms allow it can be added later in configuration, without code changes.
+Access stays light: only the first page, at most one Firecrawl request to a site every 10 seconds,
+and one 15-minute cache entry per city and asset type, so a different budget filters the cached page
+instead of asking the site again. Live cards show no photos (they belong to the site); they show
+title, price, area, bedrooms, "Live from panamaequity.com" with the fetch time, and a link back to
+the listing. When nothing live is under the budget, the finder says so, shows the three closest live
+listings above it with Apply turned off, and keeps the sample listings in their own labeled section.
+Scraped listings stay in server memory only; none are written to the repository. If Firecrawl fails
+or takes more than 8 seconds, the finder falls back to sample data. The API key stays on the server.
+
+Cars stay on sample data. Automarket's site allows it, but its stock page took about 18 seconds to
+scrape, more than our 8-second budget under Netlify's 10-second limit. We don't use Encuentra24 or
+Compreoalquile, whose terms forbid automated access (Encuentra24 section 11; Compreoalquile section
+1.5.1), or Champion Motors, whose terms forbid automated extraction for republishing.
 
 ## Links
 

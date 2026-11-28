@@ -39,6 +39,7 @@ const HOUSE_SCHEMA = {
           areaM2: { type: "number", description: "Built area in square meters" },
           bedrooms: { type: "number" },
           buildingAgeYears: { type: "number", description: "Building age in years, or derive from year built" },
+          status: { type: "string", description: "For Sale or For Rent, as the card shows it" },
         },
         required: ["title", "price", "url"],
       },
@@ -80,10 +81,37 @@ const VEHICLE_SCHEMA = {
 const NO_INVENTING = " Copy values exactly as shown. If the page lists none, return an empty list. Never invent a listing, price or URL.";
 const PROMPTS: Record<AssetType, string> = {
   house:
-    "Extract every residential property for sale on this page (houses and apartments). One item per listing, with its link. Skip ads, rentals and project teasers without a price." + NO_INVENTING,
+    "Extract every residential property for sale on this page (houses and apartments). One item per listing, with its link. Skip ads, rentals (For Rent, per month) and project teasers without a price." + NO_INVENTING,
   vehicle:
     "Extract every used car for sale on this page. One item per listing, with its link. Skip ads, motorcycles and listings without a price." + NO_INVENTING,
 };
+
+// ---------------------------------------------------------------- respectful access
+// At most one Firecrawl request per source host every 10 seconds (Panama Equity's robots.txt asks
+// for Crawl-delay: 10; the same rule is applied to every source). An in-memory lock per server
+// process: on Netlify each function instance keeps its own, and the 15-minute cache in service.ts
+// keeps the real request rate far below this.
+export const MIN_GAP_MS = 10_000;
+const lastRequest = new Map<string, number>();
+
+export class RateLimitedError extends Error {
+  constructor(host: string) {
+    super(`${host} was asked less than ${MIN_GAP_MS / 1000} s ago`);
+    this.name = "RateLimitedError";
+  }
+}
+
+/** Takes the host's slot if it is free; check-and-set in one step, so parallel requests can't both pass. */
+function takeSlot(host: string, now = Date.now()): boolean {
+  const last = lastRequest.get(host);
+  if (last !== undefined && now - last < MIN_GAP_MS) return false;
+  lastRequest.set(host, now);
+  return true;
+}
+
+/** Below these the "price" is a rent or a deposit, not a sale. */
+const MIN_SALE_PRICE: Record<AssetType, number> = { house: 20_000, vehicle: 1_000 };
+const RENTAL = /\b(for rent|rent(al)?|alquiler|alquilo|per month|\/mo|mensual)\b/i;
 
 export function liveSourcesFor(type: AssetType): string[] {
   const raw = type === "house" ? process.env.FIRECRAWL_HOUSE_URLS : process.env.FIRECRAWL_VEHICLE_URLS;
@@ -134,6 +162,8 @@ function normalize(type: AssetType, raw: Record<string, unknown>, q: LiveQuery, 
   // Panama (balboa pegged 1:1, prices quoted in USD), Ecuador and El Salvador use USD.
   const price = parsePrice(raw.price);
   if (!price || !isUsdLike(str(raw.currency))) return null;
+  // Sales only: drop rentals the extractor let through.
+  if (price < MIN_SALE_PRICE[type] || RENTAL.test(`${str(raw.status) ?? ""} ${str(raw.title) ?? ""} ${str(raw.url) ?? ""}`)) return null;
   const host = new URL(sourceUrl).hostname.replace(/^www\./, "");
   const url = str(raw.url);
   const base = {
@@ -144,12 +174,13 @@ function normalize(type: AssetType, raw: Record<string, unknown>, q: LiveQuery, 
     city: str(raw.city) ?? q.city,
     district: str(raw.district),
     url: url && /^https?:\/\//.test(url) ? url : null,
-    imageUrl: str(raw.imageUrl),
+    // No photos from live sources: they belong to the site. The card draws a placeholder and links out.
+    imageUrl: null,
     fetchedAt: new Date().toISOString(),
     source: host,
   };
   if (type === "house") {
-    const l: HouseListing = { ...base, type: "house", areaM2: num(raw.areaM2), bedrooms: num(raw.bedrooms), buildingAgeYears: num(raw.buildingAgeYears) };
+    const l: HouseListing = { ...base, type: "house", areaM2: num(raw.areaM2), bedrooms: num(raw.bedrooms), buildingAgeYears: num(raw.buildingAgeYears) || null };
     return l;
   }
   const l: VehicleListing = {
@@ -187,7 +218,10 @@ async function scrapeOne(url: string, q: LiveQuery, signal: AbortSignal): Promis
 
 /** Fetches live listings from every configured source in parallel. Throws if nothing usable comes back. */
 export async function fetchLiveListings(q: LiveQuery, timeoutMs = Number(process.env.FIRECRAWL_TIMEOUT_MS ?? 8000)): Promise<Listing[]> {
-  const sources = liveSourcesFor(q.type).map((tpl) => fillTemplate(tpl, q));
+  const all = liveSourcesFor(q.type).map((tpl) => fillTemplate(tpl, q));
+  // One request per host per 10 s; a host asked too recently is skipped this time.
+  const sources = all.filter((u) => takeSlot(new URL(u).hostname));
+  if (sources.length === 0) throw new RateLimitedError(new URL(all[0]).hostname.replace(/^www\./, ""));
   const signal = AbortSignal.timeout(timeoutMs);
   const settled = await Promise.allSettled(sources.map((u) => scrapeOne(u, q, signal).then((rows) => ({ u, rows }))));
   const out: Listing[] = [];

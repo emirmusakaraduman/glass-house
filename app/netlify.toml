@@ -19,6 +19,11 @@
   NEXT_PUBLIC_HOUSE_POOL = "3rbdkVxXQfZmXMWn1dVXZ5hPE2ToWrvA5USH4EwsxZPz"
   NEXT_PUBLIC_VEHICLE_POOL = "Ef1qTy79zdLTSxNaTm5Bb4Lb82SyoqnWREDu6JDVzu6m"
   NEXT_PUBLIC_SITE_URL = "https://glasshouse0.netlify.app"
+  # Listing finder sources (public pages, not secrets; robots.txt and terms checked, see .env.example).
+  # FIRECRAWL_API_KEY is set in the Netlify UI only.
+  FIRECRAWL_HOUSE_URLS = "https://www.panamaequity.com/property-city/panama-city/"
+  # Cars stay on sample data: Automarket is allowed but its page takes ~18 s, past the 8 s budget.
+  FIRECRAWL_VEHICLE_URLS = ""
   FIRECRAWL_LIVE_CITIES = "Panama City"
   FIRECRAWL_TIMEOUT_MS = "8000"
 

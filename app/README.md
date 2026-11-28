@@ -91,8 +91,8 @@ The addresses are public devnet accounts from `deployments/devnet.json`.
 | `NEXT_PUBLIC_VEHICLE_POOL` | `Ef1qTy79zdLTSxNaTm5Bb4Lb82SyoqnWREDu6JDVzu6m` |
 | `NEXT_PUBLIC_SITE_URL` | the site's own address, e.g. `https://<site>.netlify.app` |
 | `FIRECRAWL_API_KEY` | secret, set in Netlify only; never in the repo |
-| `FIRECRAWL_HOUSE_URLS` | empty: no listing site we checked allows scraping |
-| `FIRECRAWL_VEHICLE_URLS` | empty, same reason |
+| `FIRECRAWL_HOUSE_URLS` | `https://www.panamaequity.com/property-city/panama-city/` (robots.txt and terms checked; first page only) |
+| `FIRECRAWL_VEHICLE_URLS` | empty: Automarket is allowed but takes ~18 s, past the 8 s budget; cars stay on sample data |
 | `FIRECRAWL_LIVE` | `on` |
 | `FIRECRAWL_LIVE_CITIES` | `Panama City` |
 | `FIRECRAWL_TIMEOUT_MS` | `8000` (Netlify functions stop at 10 s; after this the finder shows sample data) |
@@ -110,11 +110,14 @@ there. With both Firecrawl URL lists empty the finder never calls Firecrawl and 
   hash and value band are meant for the chain.
 - Live calls use Firecrawl's `/v2/scrape` with a JSON schema (`src/lib/listings/firecrawl.ts`).
   Sources are URL templates in `FIRECRAWL_HOUSE_URLS` / `FIRECRAWL_VEHICLE_URLS`; add only sites
-  whose robots.txt and terms allow it. The API key stays on the server. The same query within
-  15 minutes is served from memory.
+  whose robots.txt and terms allow it. The API key stays on the server. One cache entry per city and
+  asset type lasts 15 minutes (a new budget filters it), and each source host gets at most one
+  Firecrawl request every 10 seconds; when the host was just asked, the route answers from the cache
+  or sample data. Live listings show no photos and link back to the source page; nothing scraped is
+  written to the repo.
 - If live is off, slow or empty, the route falls back to `src/data/listings.seed.json` and the UI
-  labels it **Sample data**. The current seed is hand-made example data; `npm run seed:listings`
-  replaces it with a Firecrawl snapshot.
+  labels it **Sample data**. The seed is hand-made example data. When live results exist but none is
+  under the budget, the response carries `aboveBudget` (the three closest) and `samples`.
 - Listing photos: `imageUrl` from the source, else `public/listings/{id}.webp` if it exists
   (run `npm run listings:images` after adding files), else a drawn placeholder.
 - Comparable-listings signal: a listing more than 15% above the median of similar listings
