@@ -168,7 +168,7 @@ export default function FinderPage() {
               aria-label="City"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="h-11 rounded-[12px] border border-white/12 bg-white/[0.04] px-3 text-[15px] hover:border-white/20"
+              className="h-11 rounded-[12px] border border-haze/12 bg-haze/[0.04] px-3 text-[15px] hover:border-haze/20"
             >
               {CITIES[type].map((c) => (
                 <option key={c}>{c}</option>
@@ -200,7 +200,7 @@ export default function FinderPage() {
                   setDebt(p.debt);
                   setSavings(p.savings);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 font-medium hover:border-accent/50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-haze/12 bg-haze/[0.04] px-3 py-1 font-medium hover:border-accent/50"
                 title={p.line}
               >
                 {p.type === "house" ? <Home className="h-3.5 w-3.5 text-steel" aria-hidden /> : <Car className="h-3.5 w-3.5 text-steel" aria-hidden />}
@@ -261,7 +261,7 @@ export default function FinderPage() {
           <Button variant="quiet" onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" aria-label={chips.length ? `Filters, ${chips.length} active` : "Filters"} className="px-3.5 sm:px-5">
             <SlidersHorizontal className="h-4 w-4" aria-hidden />
             <span className="hidden sm:inline">Filters</span>
-            {chips.length > 0 ? <span className="num rounded-full bg-accent px-1.5 text-[12px] leading-5 text-white">{chips.length}</span> : null}
+            {chips.length > 0 ? <span className="num rounded-full bg-accent px-1.5 text-[12px] leading-5 text-gold-ink">{chips.length}</span> : null}
           </Button>
         </div>
 
@@ -369,7 +369,7 @@ export default function FinderPage() {
 
 function Limit({ title, value, body, active }: { title: string; value: number; body: string; active: boolean }) {
   return (
-    <div className={cx("rounded-[12px] border p-3.5 backdrop-blur", active ? "border-accent-light/60 bg-accent/15 shadow-[0_0_24px_-8px_rgb(0_210_255/0.7)]" : "border-white/10 bg-white/[0.03]")}>
+    <div className={cx("rounded-[12px] border p-3.5 backdrop-blur", active ? "border-accent-light/60 bg-accent/15 shadow-[0_0_24px_-8px_rgb(0_210_255/calc(0.7*var(--glow)))]" : "border-haze/10 bg-haze/[0.03]")}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-sm font-semibold">{title}</span>
         {active ? <span className="text-[12.5px] font-semibold text-steel">Sets your limit</span> : null}
@@ -420,7 +420,7 @@ function MapBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0" aria-hidden>
       <svg viewBox="0 0 600 340" preserveAspectRatio="xMidYMid slice" className="h-full w-full opacity-[0.16]">
-        <g fill="none" stroke="#7de6ff" strokeWidth="1">
+        <g fill="none" stroke="var(--color-accent-light)" strokeWidth="1">
           <path d="M-10 60 L250 95 L610 40" />
           <path d="M-10 190 C120 170 220 230 360 200 S560 150 610 170" />
           <path d="M80 -10 L120 350" />
@@ -429,17 +429,17 @@ function MapBackdrop() {
           <path d="M-10 290 L610 250" strokeOpacity="0.6" />
           <path d="M160 -10 L210 110 L380 130 L420 350" strokeOpacity="0.5" />
         </g>
-        <path d="M-10 120 C100 140 180 90 300 115 S520 160 610 110" fill="none" stroke="#818cf8" strokeOpacity="0.5" strokeWidth="7" />
-        <g fill="#7de6ff" fillOpacity="0.25">
+        <path d="M-10 120 C100 140 180 90 300 115 S520 160 610 110" fill="none" stroke="var(--color-chart-car)" strokeOpacity="0.5" strokeWidth="7" />
+        <g fill="var(--color-accent-light)" fillOpacity="0.25">
           <rect x="330" y="60" width="60" height="40" rx="4" />
           <rect x="140" y="215" width="80" height="45" rx="4" />
           <rect x="500" y="200" width="50" height="35" rx="4" />
         </g>
       </svg>
-      <span className="absolute right-[18%] top-[14%] inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent/25 text-accent-light opacity-70 shadow-[0_0_24px_rgb(0_210_255/0.6)]">
+      <span className="absolute right-[18%] top-[14%] inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent/25 text-accent-light opacity-70 shadow-[0_0_24px_rgb(0_210_255/calc(0.6*var(--glow)))]">
         <MapPin className="h-4 w-4" />
       </span>
-      <span className="absolute right-[6%] top-[42%] inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo/15 text-indigo opacity-60 shadow-[0_0_20px_rgb(129_140_248/0.5)]">
+      <span className="absolute right-[6%] top-[42%] inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo/15 text-indigo opacity-60 shadow-[0_0_20px_rgb(129_140_248/calc(0.5*var(--glow)))]">
         <MapPin className="h-3.5 w-3.5" />
       </span>
     </div>
@@ -450,7 +450,7 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-accent-light/35 bg-accent/15 py-1 pl-3 pr-1 text-[13px] font-semibold">
       {label}
-      <button onClick={onRemove} aria-label={`Remove filter: ${label}`} className="rounded-full p-0.5 text-muted hover:bg-white/10 hover:text-ink">
+      <button onClick={onRemove} aria-label={`Remove filter: ${label}`} className="rounded-full p-0.5 text-muted hover:bg-haze/10 hover:text-ink">
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>
     </span>
@@ -460,7 +460,7 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <div className="pane flex flex-col items-center gap-3 px-6 py-12 text-center">
-      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-haze/10 bg-haze/[0.04] text-muted">
         <Search className="h-5 w-5" aria-hidden />
       </span>
       <p className="max-w-[52ch] text-[15px] text-muted">{children}</p>
@@ -520,7 +520,7 @@ function FiltersForm({
             <select
               value={f.transmission}
               onChange={(e) => setF((x) => ({ ...x, transmission: e.target.value as Filters["transmission"] }))}
-              className="h-11 w-full rounded-[12px] border border-white/12 bg-white/[0.04] px-3 text-[15px] hover:border-white/20"
+              className="h-11 w-full rounded-[12px] border border-haze/12 bg-haze/[0.04] px-3 text-[15px] hover:border-haze/20"
             >
               <option value="">Any</option>
               <option>Automatic</option>
@@ -530,7 +530,7 @@ function FiltersForm({
         </div>
       )}
       <Field label="Sort by">
-        <select value={s} onChange={(e) => setS(e.target.value as Sort)} className="h-11 w-full rounded-[12px] border border-white/12 bg-white/[0.04] px-3 text-[15px] hover:border-white/20">
+        <select value={s} onChange={(e) => setS(e.target.value as Sort)} className="h-11 w-full rounded-[12px] border border-haze/12 bg-haze/[0.04] px-3 text-[15px] hover:border-haze/20">
           {SORTS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}

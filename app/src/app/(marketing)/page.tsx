@@ -4,6 +4,7 @@
 import { AlertTriangle, ArrowRight, Blocks, Car, Eye, FileCode2, Home as HomeIcon, KeyRound, Lock, type LucideIcon, Percent, PlayCircle, Search, ShieldCheck, Wallet } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { LogoMark } from "@/components/brand/LogoMark";
 import { GlassHouseHero } from "@/components/hero/GlassHouseHero";
 import { LoanTable } from "@/components/LoanBits";
 import { PoolLossStack } from "@/components/PoolLayers";
@@ -71,11 +72,11 @@ export default function Home() {
       {/* ------------------------------------------------------------ hero */}
       <section className="grid items-center gap-12 pt-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 lg:pt-8">
         <div className="hero-enter">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-[13px] font-semibold text-ink backdrop-blur">
+          <span className="inline-flex items-center gap-2 rounded-full border border-haze/12 bg-haze/[0.05] px-3 py-1 text-[13px] font-semibold text-ink backdrop-blur">
             {DATA_SOURCE === "mock" ? (
               <AlertTriangle className="h-3.5 w-3.5 text-warn" aria-hidden />
             ) : (
-              <span className="h-2 w-2 rounded-full bg-ok shadow-[0_0_8px_rgb(52_211_153/0.8)]" aria-hidden />
+              <span className="h-2 w-2 rounded-full bg-ok shadow-[0_0_8px_rgb(52_211_153/calc(0.8*var(--glow)))]" aria-hidden />
             )}
             {DATA_SOURCE === "mock" ? "Demo data, same rules as the devnet program" : "Live on Solana devnet"}
           </span>
@@ -102,7 +103,7 @@ export default function Home() {
 
       {/* ------------------------------------------------------------ features */}
       <section aria-label="What makes GlassHouse different" className="pane -mt-8 p-2 sm:-mt-12">
-        <ul className="grid divide-y divide-white/[0.07] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+        <ul className="grid divide-y divide-haze/[0.07] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
           {FEATURES.map((f) => (
             <li key={f.title} className="flex items-start gap-3.5 p-4 sm:p-5">
               <IconBadge icon={f.icon} />
@@ -127,7 +128,7 @@ export default function Home() {
         <Pane aria-label="Home pool loss order">
           <PaneTitle aside={hm ? `Share price ${hm.sharePrice.toFixed(4)}` : undefined}>Home pool, live</PaneTitle>
           {house && hm ? <PoolLossStack pool={house} metrics={hm} /> : <Skeleton className="h-48" />}
-          <p className="mt-5 border-t border-white/[0.08] pt-4 text-[15px]">
+          <p className="mt-5 border-t border-haze/[0.08] pt-4 text-[15px]">
             Home pool right now: <span className="num font-semibold">{onChain}</span> loans on-chain, <span className="num font-semibold">{late}</span> late or defaulted,{" "}
             <span className="num font-semibold">{hm ? usd(hm.seniorImpairment) : "–"}</span> lost by investors.
           </p>
@@ -215,7 +216,7 @@ export default function Home() {
                 ["Collateral", "Mortgage to the pool's SPV", "Lien to the SPV, insurance required"],
                 ["First-loss vault", `At least ${pct(HOUSE_POOL.firstLossTarget, 0)} of principal`, `At least ${pct(VEHICLE_POOL.firstLossTarget, 0)} of principal`],
               ].map(([k, a, b]) => (
-                <tr key={k} className="border-t border-white/[0.07] transition-colors hover:bg-white/[0.03]">
+                <tr key={k} className="border-t border-haze/[0.07] transition-colors hover:bg-haze/[0.03]">
                   <td className="px-3 py-3 text-muted">{k}</td>
                   <td className="num px-3 py-3 font-medium">{a}</td>
                   <td className="num px-3 py-3 font-medium">{b}</td>
@@ -229,14 +230,15 @@ export default function Home() {
       {/* ------------------------------------------------------------ closing */}
       <GlassCard variant="glow" className="relative overflow-hidden px-6 py-12 text-center sm:px-10 sm:py-16">
         {/* The hero photo lives in the hero now; here a quiet cyan wash with a warm hint at the bottom. */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_90%_at_50%_0%,rgb(0_210_255/0.16),transparent_70%),radial-gradient(50%_60%_at_50%_115%,rgb(245_158_11/0.09),transparent_70%)]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_90%_at_50%_0%,rgb(0_210_255/calc(0.16*var(--glow))),transparent_70%),radial-gradient(50%_60%_at_50%_115%,rgb(245_158_11/0.09),transparent_70%)]" aria-hidden />
         <div className="pointer-events-none absolute inset-x-0 -top-24 mx-auto h-48 w-[70%] rounded-full bg-accent/20 blur-3xl" aria-hidden />
-        <Image
-          src={brandMark}
-          alt=""
-          sizes="120px"
-          className="relative mx-auto mb-6 h-auto w-[104px] drop-shadow-[0_0_18px_rgb(0_210_255/0.4)] sm:w-[120px]"
-        />
+        {/* The glowing PNG reads only on dark; light pages get the solid mark (brand README). */}
+        <span className="relative mx-auto mb-6 w-[104px] sm:w-[120px]" style={{ display: "var(--logo-glass)" }}>
+          <Image src={brandMark} alt="" sizes="120px" className="h-auto w-full drop-shadow-[0_0_18px_rgb(0_210_255/calc(0.4*var(--glow)))]" />
+        </span>
+        <span className="relative mx-auto mb-6 w-fit" style={{ display: "var(--logo-solid)" }}>
+          <LogoMark size={110} variant="solid" />
+        </span>
         <h2 className="display relative text-[30px] sm:text-[44px]">
           Paid in USDC? <span className="text-gradient">See what you can buy.</span>
         </h2>
@@ -278,7 +280,7 @@ function HeroVisual() {
   ];
 
   return (
-    <figure className="relative mx-auto mt-6 w-full max-w-[720px] lg:mt-0">
+    <figure data-theme="dark" className="hero-night relative mx-auto mt-6 w-full max-w-[720px] lg:mt-0">
       <GlassHouseHero>
         {/* Below lg: one row of three compact chips under the picture. lg and up: floating around it. */}
         <ul role="list" className="mt-5 grid grid-cols-3 gap-2 lg:mt-0 lg:block">
@@ -286,7 +288,7 @@ function HeroVisual() {
             <li
               key={c.key}
               className={cx(
-                "flex flex-col items-start gap-1.5 rounded-[12px] border border-white/15 bg-[rgb(19_28_49/0.72)] p-2.5 text-[12.5px] leading-snug shadow-[inset_0_1px_0_rgb(255_255_255/0.1),0_12px_30px_-12px_rgb(0_0_0/0.8)] backdrop-blur-xl",
+                "flex flex-col items-start gap-1.5 rounded-[12px] border border-haze/15 bg-[rgb(var(--glass-rgb)/0.72)] p-2.5 text-[12.5px] leading-snug shadow-[inset_0_1px_0_rgb(var(--haze-rgb)/0.1),0_12px_30px_-12px_rgb(0_0_0/0.8)] backdrop-blur-xl",
                 "hero-chip lg:absolute lg:flex-row lg:items-center lg:gap-2.5 lg:py-2 lg:pl-2 lg:pr-3.5 lg:text-[13.5px]",
                 c.pos,
               )}

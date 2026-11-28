@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "@solana/wallet-adapter-react-ui/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
+import { THEME_SCRIPT } from "@/components/providers/ThemeProvider";
 
 // Root: only html/body, the font and providers. Each route group brings its own chrome:
 // (marketing) has the top nav and footer, (app) has the sidebar, top bar and mobile tab bar.
@@ -22,7 +23,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jakarta.variable}>
+    // data-theme is set by THEME_SCRIPT before the first paint (dark when nothing is stored), so the
+    // server's "dark" may differ from the client's: suppressHydrationWarning covers that one attribute.
+    <html lang="en" className={jakarta.variable} data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-screen">
         <Providers>{children}</Providers>
       </body>

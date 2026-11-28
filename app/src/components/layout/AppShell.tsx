@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { shortAddr } from "@/lib/format";
 import { cx } from "../ui";
 import { Logo } from "../brand/Logo";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 import { APP_NAV, isNavActive, pageMeta } from "./routes";
 import { DataSourceBadge, ResetDemoButton, WalletButton, WalletCard, WalletStrip } from "./WalletBits";
 
@@ -29,8 +30,8 @@ export function AppSidebar() {
                     className={cx(
                       "flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[15px] font-medium transition-[background,color,box-shadow]",
                       active
-                        ? "bg-[linear-gradient(135deg,rgb(0_210_255/0.45),rgb(0_210_255/0.2))] text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_0_0_1px_rgb(125_230_255/0.35),0_8px_24px_-10px_rgb(0_210_255/0.8)]"
-                        : "text-muted hover:bg-white/[0.05] hover:text-ink",
+                        ? "nav-active bg-[linear-gradient(135deg,rgb(0_210_255/calc(0.45*var(--glow))),rgb(0_210_255/calc(0.2*var(--glow))))] text-ink shadow-[inset_0_1px_0_rgb(var(--haze-rgb)/0.12),0_0_0_1px_rgb(125_230_255/calc(0.35*var(--glow))),0_8px_24px_-10px_rgb(0_210_255/calc(0.8*var(--glow)))]"
+                        : "text-muted hover:bg-haze/[0.05] hover:text-ink",
                     )}
                   >
                     <Icon className={cx("h-[18px] w-[18px] shrink-0", active ? "text-accent-light" : "")} aria-hidden />
@@ -55,7 +56,7 @@ export function AppTopBar() {
   const address = publicKey?.toBase58() ?? null;
   const title = address && meta.connectedTitle ? meta.connectedTitle : meta.title;
   return (
-    <header className="border-b border-white/[0.08] bg-frost/70 backdrop-blur-xl lg:sticky lg:top-0 lg:z-20">
+    <header className="border-b border-haze/[0.08] bg-frost/70 backdrop-blur-xl lg:sticky lg:top-0 lg:z-20">
       <div className="mx-auto flex w-full max-w-[1200px] 2xl:max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-3 px-5 py-3 sm:px-8 lg:flex-nowrap lg:py-4">
         <Logo href="/" markOnly className="lg:hidden" />
         <div className="order-last min-w-0 basis-full lg:order-none lg:flex-1 lg:basis-auto">
@@ -70,6 +71,7 @@ export function AppTopBar() {
         <WalletStrip className="order-last basis-full lg:hidden" />
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
           <DataSourceBadge />
+          <ThemeSwitcher />
           <WalletButton />
         </div>
       </div>
@@ -81,7 +83,7 @@ export function AppTopBar() {
 export function AppTabBar() {
   const pathname = usePathname();
   return (
-    <nav aria-label="App" className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-frost/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+    <nav aria-label="App" className="fixed inset-x-0 bottom-0 z-30 border-t border-haze/10 bg-frost/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
       <ul className="mx-auto grid max-w-[560px] grid-cols-5">
         {APP_NAV.map((item) => {
           const active = isNavActive(item, pathname);
@@ -96,7 +98,7 @@ export function AppTabBar() {
                 <span
                   className={cx(
                     "inline-flex h-8 w-12 items-center justify-center rounded-full transition-[background,box-shadow]",
-                    active && "bg-accent/30 shadow-[0_0_0_1px_rgb(125_230_255/0.4),0_6px_18px_-6px_rgb(0_210_255/0.9)]",
+                    active && "tab-active bg-accent/30 shadow-[0_0_0_1px_rgb(125_230_255/calc(0.4*var(--glow))),0_6px_18px_-6px_rgb(0_210_255/calc(0.9*var(--glow)))]",
                   )}
                 >
                   <Icon className={cx("h-[18px] w-[18px]", active && "text-accent-light")} aria-hidden />

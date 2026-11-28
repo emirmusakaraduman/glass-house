@@ -328,7 +328,7 @@ export function GlassHouseHero({ className, children }: { className?: string; ch
               onClick={() => setRun((n) => n + 1)}
               aria-label="Replay animation"
               title="Replay animation"
-              className="absolute bottom-1 right-1 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-accent/30 bg-[rgb(19_28_49/0.7)] text-accent backdrop-blur hover:border-accent/60 hover:bg-accent/10 motion-reduce:hidden"
+              className="absolute bottom-1 right-1 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-accent/30 bg-[rgb(var(--glass-rgb)/0.7)] text-accent-ink backdrop-blur hover:border-accent/60 hover:bg-accent/10 motion-reduce:hidden"
             >
               <RotateCcw className="h-4 w-4" aria-hidden />
             </button>

@@ -10,7 +10,7 @@ import { cx } from "../ui";
 
 export const WalletButton = dynamic(() => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton), {
   ssr: false,
-  loading: () => <div className="h-10 w-[140px] rounded-full bg-white/[0.06]" />,
+  loading: () => <div className="h-10 w-[140px] rounded-full bg-haze/[0.06]" />,
 });
 
 /** "Mock data" while the IDL isn't wired, "Devnet" once it is. `hideOnMobile` hides it below sm. */
@@ -55,7 +55,7 @@ export function WalletCard() {
         <span className="text-[13px] font-semibold text-muted">{unit}</span>
       </div>
       <div className="mt-1.5 flex items-center gap-1.5 text-[13px]">
-        <span className={cx("h-2 w-2 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/0.8)]" : "bg-steel-soft")} aria-hidden />
+        <span className={cx("h-2 w-2 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/calc(0.8*var(--glow)))]" : "bg-steel-soft")} aria-hidden />
         <span className={connected ? "font-semibold text-ok" : "text-muted"}>{walletLabel(connected, client.mode)}</span>
       </div>
     </div>
@@ -73,7 +73,7 @@ export function WalletStrip({ className }: { className?: string }) {
   return (
     <div className={cx("pane-flat flex items-center justify-between gap-3 rounded-[14px] px-3.5 py-2 text-[13px]", className)}>
       <span className="inline-flex min-w-0 items-center gap-1.5 text-muted">
-        <span className={cx("h-2 w-2 shrink-0 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/0.8)]" : "bg-steel-soft")} aria-hidden />
+        <span className={cx("h-2 w-2 shrink-0 rounded-full", connected ? "bg-ok shadow-[0_0_8px_rgb(52_211_153/calc(0.8*var(--glow)))]" : "bg-steel-soft")} aria-hidden />
         <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="truncate">{walletLabel(connected, client.mode)}</span>
       </span>

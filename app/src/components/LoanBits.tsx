@@ -13,14 +13,14 @@ import { cx } from "./ui";
 // Dark-theme pills: a tinted fill plus a dot, so the state reads without relying on color alone.
 const STATUS: Record<LoanStatus, { label: string; cls: string }> = {
   Pending: { label: "Pending", cls: "border-accent-light/35 bg-accent/10 text-steel" },
-  Rejected: { label: "Rejected", cls: "border-white/15 bg-white/[0.04] text-muted" },
+  Rejected: { label: "Rejected", cls: "border-haze/15 bg-haze/[0.04] text-muted" },
   Funded: { label: "In escrow", cls: "border-indigo/35 bg-indigo/10 text-indigo" },
-  Cancelled: { label: "Cancelled", cls: "border-white/15 bg-white/[0.04] text-muted" },
+  Cancelled: { label: "Cancelled", cls: "border-haze/15 bg-haze/[0.04] text-muted" },
   Active: { label: "Active", cls: "border-ok/35 bg-ok/10 text-ok" },
   Late1: { label: "Late, 1 missed", cls: "border-warn/40 bg-warn/10 text-warn" },
   Late2: { label: "Late, 2 missed", cls: "border-warn/60 bg-warn/[0.16] text-warn" },
   Defaulted: { label: "Defaulted", cls: "border-bad/50 bg-bad/[0.14] text-bad-fg" },
-  Recovered: { label: "Recovered", cls: "border-white/15 bg-white/[0.04] text-muted" },
+  Recovered: { label: "Recovered", cls: "border-haze/15 bg-haze/[0.04] text-muted" },
   PaidOff: { label: "Paid off", cls: "border-ok/35 bg-ok/10 text-ok" },
 };
 
@@ -74,7 +74,7 @@ export function LoanTable({ loans, compact, rowLinks, stickyHeader, mobileCards 
         <ul className="space-y-2 sm:hidden">
           {loans.map((l) => (
             <li key={l.key}>
-              <Link href={`/loans/${l.key}`} className="block rounded-[12px] border border-white/10 bg-white/[0.03] p-3.5 transition-colors hover:border-accent/40">
+              <Link href={`/loans/${l.key}`} className="block rounded-[12px] border border-haze/10 bg-haze/[0.03] p-3.5 transition-colors hover:border-accent/40">
                 <div className="flex items-center justify-between gap-2">
                   <span>
                     <span className="num font-bold text-steel">{loanLabel(l)}</span>
@@ -124,7 +124,7 @@ export function LoanTable({ loans, compact, rowLinks, stickyHeader, mobileCards 
           {loans.map((l) => (
             <tr
               key={l.key}
-              className={cx("whitespace-nowrap border-t border-white/[0.07] transition-colors hover:bg-white/[0.04]", rowLinks && "cursor-pointer")}
+              className={cx("whitespace-nowrap border-t border-haze/[0.07] transition-colors hover:bg-haze/[0.04]", rowLinks && "cursor-pointer")}
               onClick={
                 rowLinks
                   ? (e) => {

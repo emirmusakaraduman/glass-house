@@ -5,6 +5,7 @@ import { ImageResponse } from "next/og";
 // OpenGraph card: the transparent logo at its own size (655×420, never scaled up) on the brand
 // navy, with one line of text under it.
 
+// Always dark: the share image is one fixed picture, whatever theme a visitor picked.
 export const alt = "GlassHouse: transparent home and car loans on Solana";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

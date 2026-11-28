@@ -19,7 +19,7 @@ export function MiniSparkline({ values, tone = "home", width = 84, height = 40, 
           strokeWidth={2}
           dot={false}
           isAnimationActive={false}
-          style={{ filter: `drop-shadow(0 0 4px ${tone === "car" ? "rgb(129 140 248 / 0.6)" : "rgb(0 210 255 / 0.6)"})` }}
+          style={{ filter: `drop-shadow(0 0 4px ${tone === "car" ? "rgb(129 140 248 / calc(0.6 * var(--glow)))" : "rgb(0 210 255 / calc(0.6 * var(--glow)))"})` }}
         />
       </LineChart>
     </div>

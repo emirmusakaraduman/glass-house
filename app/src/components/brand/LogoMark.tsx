@@ -46,18 +46,22 @@ export function LogoMark({ size = 32, variant, title, className }: { size?: numb
   const v: LogoMarkVariant = variant ?? (size <= 24 ? "solid" : "glass");
   const a11y = title ? { role: "img", "aria-label": title } : { "aria-hidden": true as const };
 
-  if (v === "solid") {
-    return (
-      <svg viewBox={`0 0 ${SOLID_BOX.w} ${SOLID_BOX.h}`} width={size} height={size / MARK_RATIO.solid} className={cx("shrink-0", className)} {...a11y}>
-        <path d={SOLID_PATH} fill={BRAND_CYAN} fillRule="evenodd" />
-      </svg>
-    );
-  }
+  // The solid cut: one color, #00D2FF on dark and #0E7490 on light (--logo-solid-color in globals.css).
+  const solid = (style?: React.CSSProperties, label = a11y) => (
+    <svg viewBox={`0 0 ${SOLID_BOX.w} ${SOLID_BOX.h}`} width={size} height={size / MARK_RATIO.solid} className={cx("shrink-0", className)} style={style} {...label}>
+      <path d={SOLID_PATH} fill="var(--logo-solid-color)" fillRule="evenodd" />
+    </svg>
+  );
+  if (v === "solid") return solid();
 
   const grad = `${id}-g`;
   const clip = `${id}-c`;
+  // Light backgrounds get the solid cut instead (glow only reads on dark); CSS variables switch them.
   return (
+    <>
+    {solid({ display: "var(--logo-solid)" }, { "aria-hidden": true as const })}
     <svg
+      style={{ display: "var(--logo-glass)" }}
       viewBox={`${GLASS_BOX.x} ${GLASS_BOX.y} ${GLASS_BOX.w} ${GLASS_BOX.h}`}
       width={size}
       height={size / MARK_RATIO.glass}
@@ -77,5 +81,6 @@ export function LogoMark({ size = 32, variant, title, className }: { size?: numb
       {/* Thin inner light: the outline stroked, clipped to the inside so only its inner half shows. */}
       <path d={GLASS_PATH} clipPath={`url(#${clip})`} fill="none" stroke={BRAND_HIGHLIGHT} strokeOpacity={0.75} strokeWidth={7} strokeLinejoin="bevel" />
     </svg>
+    </>
   );
 }

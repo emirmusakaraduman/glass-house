@@ -258,7 +258,7 @@ export default function StressPage() {
   // The presentation view goes straight into <body>: a parent with a transform would trap `fixed`.
   if (present) {
     return createPortal(
-      <div className="fixed inset-0 z-[70] overflow-y-auto bg-frost px-6 py-5 xl:px-10">
+      <div data-theme="dark" className="fixed inset-0 z-[70] overflow-y-auto bg-frost px-6 py-5 xl:px-10">
         <div className="mx-auto max-w-[1840px] space-y-4">
           <h1 className="title text-gradient text-[28px] leading-none">Stress test: the same crash, two lenders</h1>
           {strip}
@@ -300,7 +300,7 @@ export default function StressPage() {
                 ]}
                 caption={`Each defaulted ${asset} is sold first. The sale covers ${usd(gh.netSalePerLoan)} of the ${usd(gh.claimPerLoan)} owed per loan.`}
               />
-              <div className="mt-5 border-t border-white/[0.08] pt-3 text-[15px]">
+              <div className="mt-5 border-t border-haze/[0.08] pt-3 text-[15px]">
                 <Row k="Owed per defaulted loan, with 15 months of interest" v={usd(gh.claimPerLoan)} />
                 <Row k={`Net sale per ${asset}`} v={usd(gh.netSalePerLoan)} />
                 <Row k="Gap per loan after collateral" v={usd(gh.gapPerLoan)} />
@@ -323,7 +323,7 @@ export default function StressPage() {
                 ]}
                 caption={`3% down: the sale covers ${usd(oldR.netSalePerLoan)} of the ${usd(oldR.claimPerLoan)} owed per loan.`}
               />
-              <div className="mt-5 border-t border-white/[0.08] pt-3 text-[15px]">
+              <div className="mt-5 border-t border-haze/[0.08] pt-3 text-[15px]">
                 <Row k="Gap per defaulted loan" v={usd(oldR.gapPerLoan)} />
                 <Row k="Total loss" v={usd(oldR.totalLoss)} strong />
               </div>
@@ -398,7 +398,7 @@ function SensitivityTable({ base, tab }: { base: StressScenario; tab: Tab }) {
         </thead>
         <tbody className="num">
           {tab === "house" ? (
-            <tr className="border-t border-white/[0.07]">
+            <tr className="border-t border-haze/[0.07]">
               <td className="px-3 py-2.5 text-muted">Break-even price drop</td>
               {rows.map((r) => (
                 <td key={r.c} className={cx("px-3 py-2.5 text-right", r.c === DOC.cost && "bg-accent/10 font-bold")}>
@@ -413,7 +413,7 @@ function SensitivityTable({ base, tab }: { base: StressScenario; tab: Tab }) {
             { k: "Investors lose at 40%", f: (r: (typeof rows)[0]) => lose(r.d40) },
             ...(tab === "vehicle" ? [{ k: "Investors lose at 50%", f: (r: (typeof rows)[0]) => lose(r.d50) }] : []),
           ].map((row) => (
-            <tr key={row.k} className="border-t border-white/[0.07]">
+            <tr key={row.k} className="border-t border-haze/[0.07]">
               <td className="px-3 py-2.5 text-muted">{row.k}</td>
               {rows.map((r) => (
                 <td key={r.c} className={cx("px-3 py-2.5 text-right", r.c === DOC.cost && "bg-accent/10")}>

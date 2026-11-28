@@ -99,7 +99,7 @@ export default function CosignPage() {
             {req.problem ? <Note tone="warn">{req.problem}</Note> : null}
             {wrongWallet ? <Note tone="warn">This link is for the seller wallet {shortAddr(req.seller)}. The connected wallet is {shortAddr(me!)}. Switch wallets to sign.</Note> : null}
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.08] pt-4">
+            <div className="flex flex-wrap items-center gap-3 border-t border-haze/[0.08] pt-4">
               {!me ? <WalletButton /> : null}
               <Button onClick={sign} disabled={!me || wrongWallet || !!req.problem || action.pending}>
                 {action.pending ? (

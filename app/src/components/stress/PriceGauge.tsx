@@ -47,7 +47,7 @@ export function PriceGauge({ price, drop, label, ref }: { price: number; drop: n
   );
 
   return (
-    <div className="flex h-10 items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3">
+    <div className="flex h-10 items-center gap-3 rounded-xl border border-haze/[0.07] bg-haze/[0.025] px-3">
       <div className="shrink-0 leading-tight">
         <span className="block text-[12px] text-muted">{label}</span>
         <span className="num block text-[13px] font-semibold">

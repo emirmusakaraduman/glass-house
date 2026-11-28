@@ -100,7 +100,8 @@ export function CollapseFx({ animate, seed, ref }: { animate: boolean; seed: num
   const intensity = useRef(0); // eased 0..1
   const fade = useRef(0); // 1 while burning, falls to 0 in FADE_MS after
   const last = useRef(0);
-  const sprites = useRef<HTMLCanvasElement[] | null>(null);
+  /** [dark (additive), light (normal blending, deeper colors)] */
+  const sprites = useRef<HTMLCanvasElement[][] | null>(null);
 
   const stop = () => {
     if (raf.current !== null) cancelAnimationFrame(raf.current);
@@ -149,8 +150,10 @@ export function CollapseFx({ animate, seed, ref }: { animate: boolean; seed: num
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    ctx.globalCompositeOperation = "lighter";
-    const [deep, orange, yellow] = sprites.current!;
+    // Light pages: additive blending would wash out to white, so normal blending and darker flames.
+    const light = root.current?.closest("[data-theme]")?.getAttribute("data-theme") === "light";
+    ctx.globalCompositeOperation = light ? "source-over" : "lighter";
+    const [deep, orange, yellow] = sprites.current![light ? 1 : 0];
     const flameTop = h * 0.65; // flames stay in the bottom 35%
     for (let i = ps.length - 1; i >= 0; i--) {
       const p = ps[i];
@@ -164,7 +167,7 @@ export function CollapseFx({ animate, seed, ref }: { animate: boolean; seed: num
       }
       if (p.spark) {
         ctx.globalAlpha = Math.max(0, (1 - u) * 0.9 * fade.current);
-        ctx.fillStyle = u < 0.5 ? "#fde68a" : "#fb923c";
+        ctx.fillStyle = light ? (u < 0.5 ? "#d97706" : "#c2410c") : u < 0.5 ? "#fde68a" : "#fb923c";
         ctx.fillRect(p.x, p.y, p.size, p.size);
         continue;
       }
@@ -206,7 +209,10 @@ export function CollapseFx({ animate, seed, ref }: { animate: boolean; seed: num
 
   // Canvas size follows the panel; DPR capped at 2.
   useEffect(() => {
-    sprites.current = [sprite("rgba(190,30,30,0.9)", "rgba(120,10,20,0.45)"), sprite("rgba(255,140,40,0.95)", "rgba(220,60,20,0.45)"), sprite("rgba(255,230,120,0.95)", "rgba(255,150,40,0.4)")];
+    sprites.current = [
+      [sprite("rgba(190,30,30,0.9)", "rgba(120,10,20,0.45)"), sprite("rgba(255,140,40,0.95)", "rgba(220,60,20,0.45)"), sprite("rgba(255,230,120,0.95)", "rgba(255,150,40,0.4)")],
+      [sprite("rgba(127,29,29,0.75)", "rgba(153,27,27,0.3)"), sprite("rgba(194,65,12,0.75)", "rgba(185,28,28,0.3)"), sprite("rgba(217,119,6,0.7)", "rgba(194,65,12,0.28)")],
+    ];
     const el = root.current;
     const cv = canvas.current;
     if (!el || !cv) return;

@@ -98,7 +98,7 @@ const BTN_BASE =
 const BTN_VARIANT = {
   primary: "btn-gold",
   accent: "btn-accent",
-  quiet: "border border-accent/30 bg-[rgb(19_28_49/0.7)] text-ink backdrop-blur hover:border-accent/60 hover:bg-accent/10",
+  quiet: "border border-accent/30 bg-[rgb(var(--glass-rgb)/0.7)] text-ink backdrop-blur hover:border-accent/60 hover:bg-accent/10",
   danger: "border border-bad/45 bg-bad/10 text-bad-fg hover:border-bad/75 hover:bg-bad/15",
 } as const;
 
@@ -117,7 +117,7 @@ export function ButtonLink({ href, variant = "primary", className, children }: {
 // ---------------------------------------------------------------- inputs
 
 const INPUT_SHELL =
-  "h-11 w-full rounded-[12px] border border-white/12 bg-white/[0.04] text-[15px] text-ink transition-[border-color,box-shadow] placeholder:text-muted hover:border-white/20";
+  "h-11 w-full rounded-[12px] border border-haze/12 bg-haze/[0.04] text-[15px] text-ink transition-[border-color,box-shadow] placeholder:text-muted hover:border-haze/20";
 
 export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
@@ -132,7 +132,7 @@ export function Field({ label, hint, children }: { label: string; hint?: ReactNo
 /** `autoFocus` marks the field for Modal to focus when it opens. */
 export function MoneyInput({ value, onChange, min = 0, step = 100, ariaLabel, autoFocus }: { value: number; onChange: (v: number) => void; min?: number; step?: number; ariaLabel?: string; autoFocus?: boolean }) {
   return (
-    <div className={cx(INPUT_SHELL, "flex items-center px-3.5 focus-within:border-accent-light/70 focus-within:shadow-[0_0_0_3px_rgb(0_210_255/0.35)]")}>
+    <div className={cx(INPUT_SHELL, "flex items-center px-3.5 focus-within:border-accent-light/70 focus-within:shadow-[0_0_0_3px_rgb(0_210_255/calc(0.35*var(--glow)))]")}>
       <span className="mr-1.5 text-muted">$</span>
       <input
         aria-label={ariaLabel}
@@ -153,7 +153,7 @@ export function TextInput(props: ComponentProps<"input">) {
   return (
     <input
       {...props}
-      className={cx(INPUT_SHELL, "px-3.5 outline-none focus-visible:border-accent-light/70 focus-visible:shadow-[0_0_0_3px_rgb(0_210_255/0.35)]", props.className)}
+      className={cx(INPUT_SHELL, "px-3.5 outline-none focus-visible:border-accent-light/70 focus-visible:shadow-[0_0_0_3px_rgb(0_210_255/calc(0.35*var(--glow)))]", props.className)}
     />
   );
 }
@@ -162,7 +162,7 @@ export function TextInput(props: ComponentProps<"input">) {
 /** `icon` on an option is optional (lucide icon shown before the label). */
 export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; icon?: LucideIcon }[]; label: string }) {
   return (
-    <div role="tablist" aria-label={label} className="inline-flex max-w-full flex-wrap rounded-full border border-white/10 bg-white/[0.04] p-1">
+    <div role="tablist" aria-label={label} className="inline-flex max-w-full flex-wrap rounded-full border border-haze/10 bg-haze/[0.04] p-1">
       {options.map((o) => (
         <button
           key={o.value}
@@ -171,7 +171,7 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
           onClick={() => onChange(o.value)}
           className={cx(
             "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-[background,color]",
-            value === o.value ? "fill-accent" : "text-muted hover:bg-white/[0.06] hover:text-ink",
+            value === o.value ? "fill-accent" : "text-muted hover:bg-haze/[0.06] hover:text-ink",
           )}
         >
           {o.icon ? <o.icon className="h-4 w-4" aria-hidden /> : null}
@@ -214,7 +214,7 @@ export function SampleDataBadge() {
 }
 
 const ICON_TONE = {
-  accent: "border-accent/30 bg-[linear-gradient(135deg,rgb(0_210_255/0.22),rgb(0_210_255/0.06))] text-accent",
+  accent: "border-accent/30 bg-[linear-gradient(135deg,rgb(0_210_255/calc(0.22*var(--glow))),rgb(0_210_255/calc(0.06*var(--glow))))] text-accent-ink",
   indigo: "border-indigo/30 bg-indigo/10 text-indigo",
   ok: "border-ok/30 bg-ok/10 text-ok",
   warn: "border-warn/30 bg-warn/10 text-warn",
@@ -228,7 +228,7 @@ export function IconBadge({ icon: Icon, size = "md", tone = "accent", label, cla
   const [box, glyph] = ICON_SIZE[size];
   return (
     <span
-      className={cx("inline-flex shrink-0 items-center justify-center border shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]", box, ICON_TONE[tone], className)}
+      className={cx("inline-flex shrink-0 items-center justify-center border shadow-[inset_0_1px_0_rgb(var(--haze-rgb)/0.12)]", box, ICON_TONE[tone], className)}
       role={label ? "img" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
@@ -262,7 +262,7 @@ export function Stepper({
           <li key={s.label} className="relative flex min-w-0 flex-1 flex-col items-center text-center" aria-current={active ? "step" : undefined}>
             {i > 0 ? (
               <span
-                className={cx("absolute left-[calc(-50%+24px)] right-[calc(50%+24px)] top-4 h-0.5 rounded-full", i <= current ? "bg-accent-gradient" : "bg-white/12")}
+                className={cx("absolute left-[calc(-50%+24px)] right-[calc(50%+24px)] top-4 h-0.5 rounded-full", i <= current ? "bg-accent-gradient" : "bg-haze/12")}
                 aria-hidden
               />
             ) : null}
@@ -271,7 +271,7 @@ export function Stepper({
                 "num relative z-10 inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border text-sm font-bold",
                 done && "fill-accent border-transparent",
                 active && "fill-accent border-transparent ring-4 ring-accent/25",
-                !done && !active && "border-white/15 bg-night text-muted",
+                !done && !active && "border-haze/15 bg-night text-muted",
               );
               const inner = (
                 <>
@@ -373,7 +373,7 @@ export function Modal({
               </p>
             ) : null}
           </div>
-          <button onClick={onClose} aria-label="Close" className="-mr-1 -mt-1 rounded-full border border-white/10 bg-white/[0.05] p-1.5 text-muted hover:text-ink">
+          <button onClick={onClose} aria-label="Close" className="-mr-1 -mt-1 rounded-full border border-haze/10 bg-haze/[0.05] p-1.5 text-muted hover:text-ink">
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
@@ -394,7 +394,7 @@ export function LoadError({ error, what }: { error: string | null; what: string 
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cx("animate-pulse rounded-[12px] bg-white/[0.06]", className)} aria-hidden />;
+  return <div className={cx("animate-pulse rounded-[12px] bg-haze/[0.06]", className)} aria-hidden />;
 }
 
 export function Row({ k, v, strong }: { k: ReactNode; v: ReactNode; strong?: boolean }) {

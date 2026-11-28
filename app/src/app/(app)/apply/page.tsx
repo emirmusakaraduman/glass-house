@@ -167,7 +167,7 @@ export default function ApplyPage() {
           </span>
           <ChevronDown className="h-5 w-5 text-muted transition-transform group-open:rotate-180" aria-hidden />
         </summary>
-        <div className="border-t border-white/[0.08] p-4">{summary}</div>
+        <div className="border-t border-haze/[0.08] p-4">{summary}</div>
       </details>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -206,7 +206,7 @@ export default function ApplyPage() {
           <GlassCard className="space-y-6">
             <Stepper steps={STEPS} current={step} onStepClick={setStep} />
 
-            <h2 ref={headingRef} tabIndex={-1} className="title border-t border-white/[0.08] pt-5 text-xl outline-none">
+            <h2 ref={headingRef} tabIndex={-1} className="title border-t border-haze/[0.08] pt-5 text-xl outline-none">
               <span className="num mr-2 text-sm font-bold text-steel">Step {step + 1}</span>
               {STEPS[step].label}
             </h2>
@@ -320,7 +320,7 @@ export default function ApplyPage() {
                     <Row k="Down payment" v={usd(cost.downPayment, { cents: true })} />
                     <Row k={`Origination fee, ${pct(pool.originationFee, 0)}`} v={usd(cost.fee, { cents: true })} />
                     <Row k={`Collateral, ${pool.collateralInstallments} installments`} v={usd(cost.collateral, { cents: true })} />
-                    <div className="mt-1 border-t border-white/[0.08] pt-1">
+                    <div className="mt-1 border-t border-haze/[0.08] pt-1">
                       <Row k="Cash at closing" v={usd(cost.cashAtClosing, { cents: true })} strong />
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export default function ApplyPage() {
             ) : null}
 
             {/* ------------------------------------------------------------ navigation */}
-            <div className="border-t border-white/[0.08] pt-5">
+            <div className="border-t border-haze/[0.08] pt-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Button variant="quiet" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className={cx(step === 0 && "invisible")}>
                   <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -412,8 +412,8 @@ function DetailsStep(p: {
           What you&apos;re buying
         </h3>
         {p.listing ? (
-          <div className="flex gap-4 rounded-[12px] border border-white/10 bg-white/[0.04] p-3">
-            <div className="h-20 w-28 shrink-0 overflow-hidden rounded-[12px] border border-white/10">
+          <div className="flex gap-4 rounded-[12px] border border-haze/10 bg-haze/[0.04] p-3">
+            <div className="h-20 w-28 shrink-0 overflow-hidden rounded-[12px] border border-haze/10">
               <ListingVisual listing={p.listing} />
             </div>
             <div className="min-w-0">
@@ -450,7 +450,7 @@ function DetailsStep(p: {
             <MoneyInput value={p.price} onChange={p.setPrice} step={500} ariaLabel="Price" />
           </Field>
           <Field label="City">
-            <select value={p.city} onChange={(e) => p.setCity(e.target.value)} className="h-11 w-full rounded-[12px] border border-white/12 bg-white/[0.04] px-3 text-[15px] hover:border-white/20">
+            <select value={p.city} onChange={(e) => p.setCity(e.target.value)} className="h-11 w-full rounded-[12px] border border-haze/12 bg-haze/[0.04] px-3 text-[15px] hover:border-haze/20">
               {[...new Set([...CITIES[p.type], p.city])].map((c) => (
                 <option key={c}>{c}</option>
               ))}
@@ -492,11 +492,11 @@ function DownSlider({ value, min, max, price, onChange }: { value: number; min: 
         <span className="fill-accent num pointer-events-none absolute top-0 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-[13px] font-bold" style={{ left: at(value) }} aria-hidden>
           {pct(value, 0)}
         </span>
-        <div className="absolute inset-x-0 top-[38px] h-2.5 rounded-full bg-white/10">
-          <div className="absolute inset-y-0 left-0 rounded-l-full bg-[repeating-linear-gradient(135deg,rgb(255_255_255/0.14)_0_4px,transparent_4px_8px)]" style={{ width: at(min) }} />
-          <div className="bg-accent-gradient absolute inset-y-0 left-0 rounded-full shadow-[0_0_14px_rgb(0_210_255/0.6)]" style={{ width: at(value) }} />
+        <div className="absolute inset-x-0 top-[38px] h-2.5 rounded-full bg-haze/10">
+          <div className="absolute inset-y-0 left-0 rounded-l-full bg-[repeating-linear-gradient(135deg,rgb(var(--haze-rgb)/0.14)_0_4px,transparent_4px_8px)]" style={{ width: at(min) }} />
+          <div className="bg-accent-gradient absolute inset-y-0 left-0 rounded-full shadow-[0_0_14px_rgb(0_210_255/calc(0.6*var(--glow)))]" style={{ width: at(value) }} />
         </div>
-        <span className="absolute top-[30px] h-[26px] w-px bg-white/60" style={{ left: at(min) }} aria-hidden />
+        <span className="absolute top-[30px] h-[26px] w-px bg-haze/60" style={{ left: at(min) }} aria-hidden />
         <span className="absolute top-[60px] -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-muted" style={{ left: at(min) }} aria-hidden>
           Minimum {pct(min, 0)}
         </span>
@@ -513,7 +513,7 @@ function DownSlider({ value, min, max, price, onChange }: { value: number; min: 
           style={{ left: at(min), right: 0 }}
         />
         <span
-          className="pointer-events-none absolute top-[33px] h-5 w-5 -translate-x-1/2 rounded-full border-2 border-white bg-accent shadow-[0_0_0_4px_rgb(0_210_255/0.35),0_4px_12px_rgb(0_0_0/0.5)] peer-focus-visible:ring-4 peer-focus-visible:ring-accent-light/80"
+          className="pointer-events-none absolute top-[33px] h-5 w-5 -translate-x-1/2 rounded-full border-2 border-white bg-accent shadow-[0_0_0_4px_rgb(0_210_255/calc(0.35*var(--glow))),0_4px_12px_rgb(0_0_0/0.5)] peer-focus-visible:ring-4 peer-focus-visible:ring-accent-light/80"
           style={{ left: at(value) }}
           aria-hidden
         />
@@ -587,8 +587,8 @@ function AffordBar({ dti, pool }: { dti: number; pool: PoolParams }) {
         <span className={cx("num text-sm font-bold", ok ? "text-ok" : "text-warn")}>{finite ? pct(dti, 1) : "No free income"} of free income</span>
       </div>
       <div className="relative pb-5 pt-1">
-        <div className="relative h-3 overflow-hidden rounded-full bg-white/10" role="img" aria-label={`Installment is ${finite ? pct(dti, 1) : "more than all"} of free income; the limit is ${pct(pool.maxDti, 0)}.`}>
-          <div className={cx("h-full rounded-full", ok ? "bg-ok shadow-[0_0_12px_rgb(52_211_153/0.6)]" : "bg-warn shadow-[0_0_12px_rgb(251_146_60/0.6)]")} style={{ width: `${fill * 100}%` }} />
+        <div className="relative h-3 overflow-hidden rounded-full bg-haze/10" role="img" aria-label={`Installment is ${finite ? pct(dti, 1) : "more than all"} of free income; the limit is ${pct(pool.maxDti, 0)}.`}>
+          <div className={cx("h-full rounded-full", ok ? "bg-ok shadow-[0_0_12px_rgb(52_211_153/calc(0.6*var(--glow)))]" : "bg-warn shadow-[0_0_12px_rgb(251_146_60/0.6)]")} style={{ width: `${fill * 100}%` }} />
         </div>
         <span className="absolute top-0 h-5 w-0.5 rounded bg-ink" style={{ left: `${(pool.maxDti / scale) * 100}%` }} aria-hidden />
         <span className="absolute top-6 -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-muted" style={{ left: `${(pool.maxDti / scale) * 100}%` }} aria-hidden>
@@ -664,7 +664,7 @@ function LoanSummary({
       <h2 className="title hidden text-lg lg:block">Loan summary</h2>
       {listing ? (
         <div className="flex gap-3">
-          <div className="h-20 w-28 shrink-0 overflow-hidden rounded-[12px] border border-white/10">
+          <div className="h-20 w-28 shrink-0 overflow-hidden rounded-[12px] border border-haze/10">
             <ListingVisual listing={listing} />
           </div>
           <div className="min-w-0">
@@ -676,7 +676,7 @@ function LoanSummary({
           </div>
         </div>
       ) : (
-        <div className="rounded-[12px] border border-dashed border-white/15 px-3.5 py-3 text-sm text-muted">
+        <div className="rounded-[12px] border border-dashed border-haze/15 px-3.5 py-3 text-sm text-muted">
           {detached ? "Listing detached after you changed the price or type." : "No listing picked."}{" "}
           <Link href="/finder" className="font-semibold text-steel underline underline-offset-2">
             Find one in your budget
@@ -690,15 +690,15 @@ function LoanSummary({
 
       <div className="flex items-center justify-between gap-3">
         <span className="num text-[28px] font-extrabold tracking-tight">{usd(price)}</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[12.5px] font-semibold">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-haze/15 bg-haze/[0.05] px-2.5 py-1 text-[12.5px] font-semibold">
           {type === "house" ? <Home className="h-3.5 w-3.5 text-steel" aria-hidden /> : <Car className="h-3.5 w-3.5 text-steel" aria-hidden />}
           {type === "house" ? "Home loan" : "Car loan"}
         </span>
       </div>
 
-      <div className="border-t border-white/[0.08] pt-4">
+      <div className="border-t border-haze/[0.08] pt-4">
         <div className="dense text-[13px] text-muted">Monthly installment</div>
-        <div className="display num text-gradient text-[40px] drop-shadow-[0_6px_24px_rgb(0_210_255/0.5)]">{usd(cost.installment, { cents: true })}</div>
+        <div className="display num text-gradient text-[40px] drop-shadow-[0_6px_24px_rgb(0_210_255/calc(0.5*var(--glow)))]">{usd(cost.installment, { cents: true })}</div>
         <div className="text-sm text-muted">
           {pool.termMonths} months, {pct(pool.annualRate, 0)} fixed
         </div>
@@ -772,7 +772,7 @@ function SellerHandoff({
           Seller&apos;s link
         </label>
         <div className="mt-1.5 flex gap-2">
-          <input id="cosign-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="h-11 min-w-0 flex-1 rounded-[12px] border border-white/12 bg-white/[0.04] px-3 font-mono text-[13px]" />
+          <input id="cosign-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="h-11 min-w-0 flex-1 rounded-[12px] border border-haze/12 bg-haze/[0.04] px-3 font-mono text-[13px]" />
           <Button variant="accent" onClick={copy} aria-live="polite">
             {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
             {copied ? "Copied" : "Copy"}
@@ -785,7 +785,7 @@ function SellerHandoff({
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Waiting for the seller to sign…
       </div>
 
-      <div className="border-t border-white/[0.08] pt-4">
+      <div className="border-t border-haze/[0.08] pt-4">
         <Button
           variant="quiet"
           disabled={cancel.pending || !client.cancelCosignLinks}
